@@ -18,27 +18,42 @@ type Product struct {
 	MaxPositionNotionalUsd string `json:"maxPositionNotionalUsd"`
 }
 
-type LimitOrder struct {
-	Subaccount           string `json:"subaccount"`
-	Sender               string `json:"sender"`
-	Nonce                string `json:"nonce"` // string of nanoseconds
-	Type                 string `json:"type"`  // LIMIT or MARKET
-	Quantity             string `json:"quantity"`
-	Side                 int64  `json:"side"` // 0 BUY, 1 SELL
-	OnchainID            int64  `json:"onchainId"`
-	EngineType           int64  `json:"engineType"` // enum
-	ClientOrderID        string `json:"clientOrderId,omitempty"`
-	ReduceOnly           bool   `json:"reduceOnly"`
-	Close                bool   `json:"close,omitempty"`
-	StopPrice            int64  `json:"stopPrice,omitempty"`
-	StopType             int64  `json:"stopType,omitempty"`
-	SignedAt             int64  `json:"signedAt"` // seconds since epoch
-	ExpiresAt            int64  `json:"expiresAt,omitempty"`
-	GroupID              string `json:"groupId,omitempty"` // UUID
-	GroupContingencyType int    `json:"groupContingencyType,omitempty"`
-	Price                string `json:"price"`
-	TimeInForce          string `json:"timeInForce"` // IOC, GTD, etc.
-	PostOnly             bool   `json:"postOnly"`
+type TimeInForce string
+
+const (
+	TIF_GTD TimeInForce = "GTD"
+	TIF_FOK TimeInForce = "FOK"
+	TIF_IOC TimeInForce = "IOC"
+)
+
+type OrderType string
+
+const (
+	ORDER_LIMIT  OrderType = "LIMIT"
+	ORDER_MARKET OrderType = "MARKET"
+)
+
+type Order struct {
+	Subaccount           string      `json:"subaccount"`
+	Sender               string      `json:"sender"`
+	Nonce                string      `json:"nonce"` // string of nanoseconds
+	Type                 OrderType   `json:"type"`  // LIMIT or MARKET
+	Quantity             string      `json:"quantity"`
+	Side                 int64       `json:"side"` // 0 BUY, 1 SELL TODO: enum
+	OnchainID            int64       `json:"onchainId"`
+	EngineType           int64       `json:"engineType"` // TODO: enum
+	ClientOrderID        string      `json:"clientOrderId,omitempty"`
+	ReduceOnly           bool        `json:"reduceOnly"`
+	Close                bool        `json:"close,omitempty"`
+	StopPrice            int64       `json:"stopPrice,omitempty"`
+	StopType             int64       `json:"stopType,omitempty"`
+	SignedAt             int64       `json:"signedAt"` // seconds since epoch
+	ExpiresAt            int64       `json:"expiresAt,omitempty"`
+	GroupID              string      `json:"groupId,omitempty"` // UUID
+	GroupContingencyType int         `json:"groupContingencyType,omitempty"`
+	Price                string      `json:"price"`
+	TimeInForce          TimeInForce `json:"timeInForce"`
+	PostOnly             bool        `json:"postOnly"`
 }
 
 type OrderCreated struct {

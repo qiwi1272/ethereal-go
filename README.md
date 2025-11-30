@@ -3,9 +3,19 @@ Ethereal Go Client
 
 Lightweight golang client for interacting with the Ethereal API.
 
+## Features
+
+- EIP-712 data signing
+- REST order placement and cancellation
+- Batch execution support (concurrent, unordered, type-safe)
+- Automatic nonce and timestamp handling
+- Minimal dependencies
+- Easy to extend with new message types
+- Socket.IO streaming support (WIP)
+
 Getting started
 ---------------
-- Require Go 1.25+.
+- Requires Go 1.25+.
 - Install: `go get github.com/qiwi1272/ethereal-go`
 
 Example
@@ -14,51 +24,47 @@ Example
 package main
 
 import (
-	"context"
-	"log"
-	"time"
+    "context"
+    "log"
 
-	client "github.com/qiwi1272/ethereal-go/client"
+    "github.com/qiwi1272/ethereal-go/ethereal"
 )
 
 func main() {
-	ctx := context.Background()
+    ctx := context.Background()
 
-	// Supplying the key via environment: ETHEREAL_PK=0xabc...
-	// Alternativley, use github.com/joho/godotenv
-	cl, err := client.NewEtherealClient(ctx, "")
+    // Uses ETHEREAL_PK if private key argument is empty
+    client, err := ethereal.NewEtherealClient(ctx, "")
+    if err != nil {
+        log.Fatal(err)
+    }
+	products, err := client.GetProductMap(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to fetch products: %v", err)
 	}
 
-	products, err := cl.GetProductMap(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	eth_perp := products["ETH-PERP"]
+    product := products["ETHUSD"]
+    order := product.NewOrder(ethereal.ORDER_LIMIT, 0.123, 1000.1, false, 0, ethereal.TIF_GTD)
 
-	order := perp.NewLimitOrder(0.123, 1000.1, false, 0) // side 0 = buy, 1 = sell
-	order.ClientOrderID = "exampleOrder"
-
-	created, err := order.Send(ctx, cl)
+	placed, err := order.Send(ctx, client)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to place limit order: %v", err)
 	}
-	log.Printf("order created: %+v", created)
 
-	cancel := client.NewCancelOrderFromCreated(placed)
-	canceled, err := cancel.Send(ctx, cl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("order canceled: %+v", canceled)
+    log.Printf("Order created: %+v\n", res)
 }
 ```
+For more complete usage examples (batching, cancel orders, typed data inspection, etc.),
+see the [examples/](./examples/) folder in this repository.
 
-Notes
+Configuration Notes
 -----
-- The client uses `ETHEREAL_PK` when no private key string is passed to `NewEtherealClient`.
-- Currently only one subaccount is supported per client. By default the first one is used.
-- This is a WIP, I'll expand the scope as I find time. 
-- Build to be generic enough that implementing new methods is trivial.
-- Immediate focus is on batch submissions and socket.io
+- If no private key is passed to `NewEtherealClient`, the library uses the `ETHEREAL_PK` environment variable.
+- Only one subaccount is currently supported; by default the first one discovered is used.
+- All signable request messages implement the `Signable` interface.
+
+
+Status
+-----
+- Work in progress.
+- Current active development: Socket.IO streaming (order books, trades, events).

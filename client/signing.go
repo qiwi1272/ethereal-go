@@ -53,52 +53,12 @@ func strip0x(s string) string {
 	return s
 }
 
-func (lo *LimitOrder) toMessage() (abi.TypedDataMessage, error) {
-	qtyBig, err := scale1e9(lo.Quantity)
-	if err != nil {
-		return abi.TypedDataMessage{}, err
-	}
-	priceBig, err := scale1e9(lo.Price)
-	if err != nil {
-		return abi.TypedDataMessage{}, err
-	}
-
-	// even though we expect these values to be uint8 according to their signatures,
-	// setting them as native uint8 raises a compiler error. strings or big ints are accepted.
-	side := new(big.Int).SetInt64(lo.Side)
-	engine := new(big.Int).SetInt64(lo.EngineType)
-	id := new(big.Int).SetInt64(lo.OnchainID)
-	sigTs := new(big.Int).SetInt64(lo.SignedAt)
-
-	return abi.TypedDataMessage{
-		"sender":     lo.Sender,
-		"subaccount": lo.Subaccount,
-		"quantity":   qtyBig,
-		"price":      priceBig,
-		"reduceOnly": lo.ReduceOnly,
-		"side":       side,
-		"engineType": engine,
-		"productId":  id,
-		"nonce":      lo.Nonce,
-		"signedAt":   sigTs,
-	}, nil
-}
-
-func (co *CancelOrder) toMessage() (abi.TypedDataMessage, error) {
-	return abi.TypedDataMessage{
-		"sender":     co.Sender,
-		"subaccount": co.Subaccount,
-		"nonce":      co.Nonce,
-		//"orderIds":   co.OrderIDs,
-	}, nil
-}
-
 type Signable interface {
-	*LimitOrder | *CancelOrder
+	build(*EtherealClient)
 	toMessage() (abi.TypedDataMessage, error)
 }
 
-func Sign[T Signable](message T, primaryType string, cl *EtherealClient) (string, error) {
+func Sign(message Signable, primaryType string, cl *EtherealClient) (string, error) {
 	msg, err := message.toMessage()
 	if err != nil {
 		return "", err

@@ -7,10 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -52,11 +50,9 @@ func NewEtherealClient(ctx context.Context, pk string) (*EtherealClient, error) 
 	var err error
 	client.pk, err = crypto.HexToECDSA(strip0x(pk))
 	if err != nil {
-
 		return nil, errors.New("unable to parse private key, likely invalid format")
 	}
 	client.address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
-
 	// ethereal env setup
 	if err := client.InitDomain(ctx); err != nil {
 		return nil, errors.Join(errors.New("failed to fetch domain config: "), err)
@@ -172,6 +168,18 @@ func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
+type intent string
+
+const (
+	Create intent = "TradeOrder"
+	Cancel intent = "CancelOrder"
+)
+
+var intentMap = map[intent]string{
+	Create: "/v1/order",
+	Cancel: "/v1/order/cancel",
+}
+
 func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product, error) {
 	data, err := e.do(ctx, "GET", "/v1/product", nil)
 	if err != nil {
@@ -190,82 +198,10 @@ func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product,
 	return products, nil
 }
 
-func (o *LimitOrder) Send(ctx context.Context, client *EtherealClient) (OrderCreated, error) {
-	var err error
-	var created OrderCreated
-
-	if domainHash == nil {
-		if err := client.InitDomain(ctx); err != nil {
-			return created, err
-		}
+func (e *EtherealClient) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
+	payload := make([]Signable, len(orders))
+	for i, order := range orders {
+		payload[i] = order
 	}
-	o.Sender = client.address
-	o.Subaccount = client.subaccount.Name
-
-	nonce := getNonce()
-
-	o.Nonce = nonce
-	o.SignedAt, err = strconv.ParseInt(nonce[:len(nonce)-9], 10, 64)
-	if err != nil {
-		return created, err
-	}
-
-	sig, err := Sign(o, "TradeOrder", client)
-	if err != nil {
-		return created, err
-	}
-
-	resp, err := client.do(ctx, "POST", "/v1/order", SignedGenericMessage{
-		Data:      o,
-		Signature: sig,
-	})
-	if err != nil {
-		return created, err
-	}
-
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return created, err
-	}
-
-	return created, nil
-}
-
-func (o *CancelOrder) Send(ctx context.Context, client *EtherealClient) ([]OrderCancelled, error) {
-	var cancelled Response[[]OrderCancelled]
-
-	if domainHash == nil {
-		if err := client.InitDomain(ctx); err != nil {
-			return cancelled.Data, err
-		}
-	}
-	o.Sender = client.address
-	o.Subaccount = client.subaccount.Name
-
-	o.Nonce = getNonce()
-
-	log.Print(o)
-
-	sig, err := Sign(o, "CancelOrder", client)
-	if err != nil {
-		return cancelled.Data, err
-	}
-
-	resp, err := client.do(ctx, "POST", "/v1/order/cancel", SignedGenericMessage{
-		Data:      o,
-		Signature: sig,
-	})
-	if err != nil {
-		return cancelled.Data, err
-	}
-
-	if err := json.Unmarshal(resp, &cancelled); err != nil {
-		return cancelled.Data, err
-	}
-
-	return cancelled.Data, nil
-}
-
-func getNonce() string {
-	now := time.Now()
-	return strconv.FormatInt(now.UnixNano(), 10)
+	return SendBatch[OrderCreated](ctx, e, Create, payload)
 }

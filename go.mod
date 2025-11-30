@@ -2,7 +2,10 @@ module github.com/qiwi1272/ethereal-go
 
 go 1.25.0
 
-require github.com/ethereum/go-ethereum v1.16.7
+require (
+	github.com/ethereum/go-ethereum v1.16.7
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect

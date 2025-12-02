@@ -33,7 +33,7 @@ func main() {
 	orders := make([]*ethereal.Order, 3)
 	for i := range orders {
 		px := 1000.1 + float64(i)
-		orders[i] = eth_perp.NewOrder(ethereal.ORDER_LIMIT, 0.123, px, false, 0, ethereal.TIF_GTD)
+		orders[i] = eth_perp.NewOrder(ethereal.ORDER_LIMIT, 0.123, px, false, ethereal.BUY, ethereal.TIF_GTD)
 	}
 	placed, err := client.BatchOrder(ctx, orders)
 	if err != nil {

@@ -15,7 +15,7 @@ func getNonce() string {
 }
 
 // -------- ORDER CREATION --------
-func (p *Product) NewOrder(orderType OrderType, qty float64, px float64, reduce bool, side int64, tif TimeInForce) *Order {
+func (p *Product) NewOrder(orderType OrderType, qty float64, px float64, reduce bool, side OrderSide, tif TimeInForce) *Order {
 	return &Order{
 		Type:        orderType,
 		Quantity:    fmt.Sprintf("%.9f", qty),
@@ -41,10 +41,10 @@ func (o *Order) toMessage() (abi.TypedDataMessage, error) {
 
 	// even though we expect these values to be uint8 according to their signatures,
 	// setting them as native uint8 raises a compiler error. strings or big ints are accepted.
-	side := new(big.Int).SetInt64(o.Side)
-	engine := new(big.Int).SetInt64(o.EngineType)
-	id := new(big.Int).SetInt64(o.OnchainID)
-	sigTs := new(big.Int).SetInt64(o.SignedAt)
+	engine := big.NewInt(int64(o.EngineType))
+	side := big.NewInt(int64(o.Side))
+	id := big.NewInt(o.OnchainID)
+	sigTs := big.NewInt(o.SignedAt)
 
 	return abi.TypedDataMessage{
 		"sender":     o.Sender,

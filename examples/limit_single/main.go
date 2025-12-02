@@ -30,7 +30,7 @@ func main() {
 	// place an order for ethusd
 	p := products["ETHUSD"]
 
-	order := p.NewOrder(ethereal.ORDER_LIMIT, 0.123, 1000.1, false, 0, ethereal.TIF_GTD)
+	order := p.NewOrder(ethereal.ORDER_LIMIT, 0.123, 1000.1, false, ethereal.BUY, ethereal.TIF_GTD)
 	placed, err := order.Send(ctx, client)
 	if err != nil {
 		log.Fatalf("failed to place limit order: %v", err)

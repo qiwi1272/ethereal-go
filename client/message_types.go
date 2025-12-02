@@ -1,21 +1,21 @@
 package ethereal
 
 type Product struct {
-	ID                     string `json:"id"`
-	Ticker                 string `json:"ticker"`
-	DisplayTicker          string `json:"displayTicker"`
-	EngineType             int64  `json:"engineType"`
-	OnchainID              int64  `json:"onchainId"`
-	LotSize                string `json:"lotSize"`
-	TickSize               string `json:"tickSize"`
-	MakerFee               string `json:"makerFee"`
-	TakerFee               string `json:"takerFee"`
-	MaxQuantity            string `json:"maxQuantity"`
-	MinQuantity            string `json:"minQuantity"`
-	Volume24h              string `json:"volume24h"`
-	FundingRate1h          string `json:"fundingRate1h"`
-	MaxOpenInterestUsd     string `json:"maxOpenInterestUsd"`
-	MaxPositionNotionalUsd string `json:"maxPositionNotionalUsd"`
+	ID                     string     `json:"id"`
+	Ticker                 string     `json:"ticker"`
+	DisplayTicker          string     `json:"displayTicker"`
+	EngineType             EngineType `json:"engineType"`
+	OnchainID              int64      `json:"onchainId"`
+	LotSize                string     `json:"lotSize"`
+	TickSize               string     `json:"tickSize"`
+	MakerFee               string     `json:"makerFee"`
+	TakerFee               string     `json:"takerFee"`
+	MaxQuantity            string     `json:"maxQuantity"`
+	MinQuantity            string     `json:"minQuantity"`
+	Volume24h              string     `json:"volume24h"`
+	FundingRate1h          string     `json:"fundingRate1h"`
+	MaxOpenInterestUsd     string     `json:"maxOpenInterestUsd"`
+	MaxPositionNotionalUsd string     `json:"maxPositionNotionalUsd"`
 }
 
 type TimeInForce string
@@ -33,15 +33,29 @@ const (
 	ORDER_MARKET OrderType = "MARKET"
 )
 
+type EngineType int64
+
+const (
+	PERPETUAL EngineType = iota
+	SPOT
+)
+
+type OrderSide int64
+
+const (
+	BUY OrderSide = iota
+	SELL
+)
+
 type Order struct {
 	Subaccount           string      `json:"subaccount"`
 	Sender               string      `json:"sender"`
 	Nonce                string      `json:"nonce"` // string of nanoseconds
 	Type                 OrderType   `json:"type"`  // LIMIT or MARKET
 	Quantity             string      `json:"quantity"`
-	Side                 int64       `json:"side"` // 0 BUY, 1 SELL TODO: enum
+	Side                 OrderSide   `json:"side"` // 0 BUY, 1 SELL TODO: enum
 	OnchainID            int64       `json:"onchainId"`
-	EngineType           int64       `json:"engineType"` // TODO: enum
+	EngineType           EngineType  `json:"engineType"` // TODO: enum
 	ClientOrderID        string      `json:"clientOrderId,omitempty"`
 	ReduceOnly           bool        `json:"reduceOnly"`
 	Close                bool        `json:"close,omitempty"`

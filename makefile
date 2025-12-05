@@ -4,8 +4,6 @@ APP := client
 PKG := ./...
 BIN := bin/$(APP)
 
-all: build
-
 fmt:
 	go fmt $(PKG)
 

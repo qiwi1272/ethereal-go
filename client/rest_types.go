@@ -90,3 +90,23 @@ type OrderCancelled struct {
 	Cloid  string `json:"clientOrderId"`
 	Result string `json:"result"`
 }
+
+type Position struct {
+	Id                    string    `json:"id"`
+	Cost                  string    `json:"cost"`
+	Size                  string    `json:"size"`
+	FundingUsd            string    `json:"fundingUsd"`
+	FundingAccruedUsd     string    `json:"fundingAccruedUsd"`
+	FeesAccruedUsd        string    `json:"feesAccruedUsd"`
+	RealizedPnl           string    `json:"realizedPnl"`
+	TotalIncreaseNotional string    `json:"totalIncreaseNotional"`
+	TotalIncreaseQuantity string    `json:"totalIncreaseQuantity"`
+	TotalDecreaseNotional string    `json:"totalDecreaseNotional"`
+	TotalDecreaseQuantity string    `json:"totalDecreaseQuantity"`
+	Side                  OrderSide `json:"side"`
+	ProductId             string    `json:"productId"`
+	UpdatedAt             uint64    `json:"updatedAt"`
+	CreatedAt             uint64    `json:"createdAt"`
+	IsLiquidated          bool      `json:"isLiquidated"`
+	LiquidationPrice      string    `json:"liquidationPrice"`
+}

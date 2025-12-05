@@ -61,6 +61,18 @@ type BatchResponse interface {
 	OrderCreated | OrderCancelled
 }
 
+type intent string
+
+const (
+	Create intent = "TradeOrder"
+	Cancel intent = "CancelOrder"
+)
+
+var intentMap = map[intent]string{
+	Create: "/v1/order",
+	Cancel: "/v1/order/cancel",
+}
+
 func SendBatch[ResponseType BatchResponse](
 	ctx context.Context,
 	cl *EtherealClient,

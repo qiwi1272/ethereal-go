@@ -168,16 +168,18 @@ func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
-type intent string
+func (e *EtherealClient) GetPosition(ctx context.Context) ([]Position, error) {
+	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
+	data, err := e.do(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	var resp Response[[]Position]
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
 
-const (
-	Create intent = "TradeOrder"
-	Cancel intent = "CancelOrder"
-)
-
-var intentMap = map[intent]string{
-	Create: "/v1/order",
-	Cancel: "/v1/order/cancel",
+	return resp.Data, nil
 }
 
 func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product, error) {

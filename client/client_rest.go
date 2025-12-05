@@ -32,9 +32,26 @@ type Subaccount struct {
 	Account string `json:"account"`
 }
 
-func NewEtherealClient(ctx context.Context, pk string) (*EtherealClient, error) {
+type Environment string
+
+const (
+	Testnet Environment = "testnet"
+	Mainnet Environment = "mainnet"
+)
+
+func (e Environment) baseURL() string {
+	switch e {
+	case Testnet:
+		return "https://api.etherealtest.net"
+	case Mainnet:
+		return "https://api.ethereal.trade"
+	}
+	panic("unknown environment")
+}
+
+func NewEtherealClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
 	client := &EtherealClient{
-		baseURL: "https://api.ethereal.trade",
+		baseURL: env.baseURL(),
 		http:    &http.Client{Timeout: 10 * time.Second},
 	}
 

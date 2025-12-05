@@ -16,7 +16,7 @@ func main() {
 	}
 	ctx := context.Background()
 	// create client and fetch products
-	rest, err := ethereal.NewEtherealClient(ctx, "")
+	rest, err := ethereal.NewEtherealClient(ctx, "", ethereal.Testnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}

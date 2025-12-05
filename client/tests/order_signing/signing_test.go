@@ -1,12 +1,30 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
 	ethereal "github.com/qiwi1272/ethereal-go/client"
 )
+
+func getTestOrder() ethereal.Order {
+	return ethereal.Order{
+		Sender:     "0xdeadbeef00000000000000000000000000000000",
+		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
+		Quantity:   "1",
+		Price:      "3000",
+		ReduceOnly: false,
+		Side:       ethereal.BUY,
+		EngineType: ethereal.PERPETUAL,
+		OnchainID:  2, // later -> ProductId
+		Nonce:      "1764897077655477722",
+		SignedAt:   int64(1764897077),
+	}
+}
 
 func TestOrders(t *testing.T) {
 	orderType := abi.TypedData{
@@ -23,24 +41,19 @@ func TestOrders(t *testing.T) {
 			{Name: "signedAt", Type: "uint64"},
 		}},
 	}
-
-	order := ethereal.Order{
-		Sender:     "0xdeadbeef00000000000000000000000000000000",
-		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
-		Quantity:   "1",
-		Price:      "3000",
-		ReduceOnly: false,
-		Side:       ethereal.BUY,
-		EngineType: ethereal.PERPETUAL,
-		OnchainID:  2, // later -> ProductId
-		Nonce:      "1764897077655477722",
-		SignedAt:   int64(1764897077),
-	}
+	order := getTestOrder()
 
 	message, err := order.ToMessage()
 	if err != nil {
 		panic(err)
 	}
+	// We do a pretty print of the message to visually inspect it during test runs.
+	// We convert it to to a json string for better readability.
+	messageJSON, err := json.MarshalIndent(message, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Order Message JSON:\n%s\n", string(messageJSON))
 
 	SenderBytes, err := orderType.EncodePrimitiveValue(orderType.Types["TradeOrder"][0].Type, message["sender"], 2)
 	if err != nil {
@@ -121,4 +134,19 @@ func TestOrders(t *testing.T) {
 	if common.Bytes2Hex(SignedAtBytes) != "0000000000000000000000000000000000000000000000000000000069323135" {
 		panic("SignedAtBytes")
 	}
+}
+
+// We test signing the order here as well, to ensure that the message encoding is correct.
+// If the encoding is wrong, the signature will also be wrong.
+func TestOrderSigning(t *testing.T) {
+
+	order := getTestOrder()
+	cxt := context.Background()
+	pk := "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a" // private key for 0xdeadbeef...
+	client, err := ethereal.NewEtherealClient(cxt, pk, ethereal.Testnet)
+	if err != nil {
+		panic(err)
+	}
+	order.Send(context.Background(), client)
+
 }

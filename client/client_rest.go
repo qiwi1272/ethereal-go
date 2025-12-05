@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -71,9 +72,7 @@ func NewEtherealClient(ctx context.Context, pk string, env Environment) (*Ethere
 	}
 	client.address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
 	// ethereal env setup
-	if err := client.InitDomain(ctx); err != nil {
-		return nil, errors.Join(errors.New("failed to fetch domain config: "), err)
-	}
+	client.InitDomain(ctx)
 
 	if err := client.InitSubaccount(ctx); err != nil {
 		return nil, errors.Join(errors.New("failed to fetch subaccount: "), err)
@@ -122,18 +121,18 @@ func (e *EtherealClient) do(ctx context.Context, method, path string, body any) 
 }
 
 // ---------- Setup ----------
-func (e *EtherealClient) InitDomain(ctx context.Context) error {
+func (e *EtherealClient) InitDomain(ctx context.Context) string {
 	// init eip 712 data from rpc
 	data, err := e.do(ctx, "GET", "/v1/rpc/config", nil)
 	if err != nil {
-		return err
+		panic("failed to fetch domain config: " + err.Error())
 	}
 	var resp struct {
 		Domain   abi.TypedDataDomain `json:"domain"`
 		SigTypes map[string]string   `json:"signatureTypes"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
-		return err
+		panic("failed to parse domain config: " + err.Error())
 	}
 
 	// parse flattened type data
@@ -141,7 +140,7 @@ func (e *EtherealClient) InitDomain(ctx context.Context) error {
 	for primaryType, schema := range resp.SigTypes {
 		types, err := ParseTypeSchema(schema)
 		if err != nil {
-			return err
+			panic("failed to parse type schema: " + err.Error())
 		}
 		parsedTypes[primaryType] = types
 	}
@@ -160,9 +159,9 @@ func (e *EtherealClient) InitDomain(ctx context.Context) error {
 	// precompute domain hash, store globally
 	domainHash, err = e.types.HashStruct("EIP712Domain", e.types.Domain.Map())
 	if err != nil {
-		return err
+		panic("failed to compute domain hash: " + err.Error())
 	}
-	return nil
+	return hex.EncodeToString(domainHash)
 }
 
 func (e *EtherealClient) InitSubaccount(ctx context.Context) error {

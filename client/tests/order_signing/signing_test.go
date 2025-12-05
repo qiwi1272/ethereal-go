@@ -144,9 +144,18 @@ func TestOrderSigning(t *testing.T) {
 	cxt := context.Background()
 	pk := "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a" // private key for 0xdeadbeef...
 	client, err := ethereal.NewEtherealClient(cxt, pk, ethereal.Testnet)
+
+	domainHash := client.InitDomain(cxt)
 	if err != nil {
 		panic(err)
 	}
-	order.Send(context.Background(), client)
+	fmt.Println("Domain Hash:", domainHash)
+
+	signature, err := ethereal.Sign(&order, "TradeOrder", client)
+	if err != nil {
+		panic(err)
+	}
+
+	println("Order Signature:", signature)
 
 }

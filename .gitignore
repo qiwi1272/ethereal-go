@@ -1,3 +1,4 @@
+.gopath
 # Build artifacts
 bin/
 *.exe

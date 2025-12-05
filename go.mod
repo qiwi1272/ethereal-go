@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/joho/godotenv v1.5.1
+	github.com/karagenc/socket.io-go v0.1.0
 )
 
 require (
@@ -22,7 +23,6 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
-	github.com/karagenc/socket.io-go v0.1.0 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

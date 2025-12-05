@@ -67,3 +67,48 @@ Status
 -----
 - Most of the client is complete, and easy to expand.
 - Other methods will be added as needed.
+
+
+Contributing
+-------------
+Contributions are welcome! Please open issues or pull requests as needed.
+
+## Code Formatting
+To format the code, use the following command:
+
+```bash
+make fmt
+```
+## Dependency Management
+To tidy up dependencies, use the following command:
+
+```bash
+make tidy
+```
+
+## To install dependencies, use the following command:
+
+```bash
+make deps
+```
+
+## Testing
+
+To run tests, use the following command:
+
+```bash
+make test
+```
+## Building
+To build the client, use the following command:
+```bash
+make build
+```
+
+## All
+To run all common tasks (formatting, tidying, vetting, testing, building), use the following command:
+
+```bash
+make all
+```
+

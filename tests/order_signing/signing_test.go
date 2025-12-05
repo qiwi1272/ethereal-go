@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/joho/godotenv"
 	ethereal "github.com/qiwi1272/ethereal-go/client"
 )
 
@@ -53,7 +53,7 @@ func toMessage(o ethereal.Order) (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func TestOrders() {
+func TestOrders(t *testing.T) {
 	orderType := abi.TypedData{
 		Types: abi.Types{"TradeOrder": []abi.Type{
 			{Name: "sender", Type: "address"},
@@ -86,6 +86,9 @@ func TestOrders() {
 	if err != nil {
 		panic(err)
 	}
+
+	log.Println("Validating order encoding...")
+	log.Printf("Order message: %+v\n", message)
 
 	SenderBytes, err := orderType.EncodePrimitiveValue(orderType.Types["TradeOrder"][0].Type, message["sender"], 2)
 	if err != nil {
@@ -168,11 +171,11 @@ func TestOrders() {
 	}
 }
 
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	TestOrders()
-	log.Println("Order validated")
-}
+// func main() {
+// 	err := godotenv.Load()
+// 	if err != nil {
+// 		log.Fatal("Error loading .env file")
+// 	}
+// 	TestOrders(
+// 	log.Println("Order validated")
+// }

@@ -168,6 +168,20 @@ func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
+func (e *EtherealClient) GetPosition(ctx context.Context) ([]Position, error) {
+	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
+	data, err := e.do(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	var resp Response[[]Position]
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
+}
+
 func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product, error) {
 	data, err := e.do(ctx, "GET", "/v1/product", nil)
 	if err != nil {

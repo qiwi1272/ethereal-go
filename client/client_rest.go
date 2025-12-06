@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,9 +22,9 @@ type EtherealClient struct {
 	baseURL    string
 	http       *http.Client
 	Subaccount *Subaccount
-	types      *abi.TypedData
+	Types      *abi.TypedData
 	pk         *ecdsa.PrivateKey
-	address    string
+	Address    string
 }
 
 type Subaccount struct {
@@ -32,9 +33,16 @@ type Subaccount struct {
 	Account string `json:"account"`
 }
 
-func NewEtherealClient(ctx context.Context, pk string) (*EtherealClient, error) {
+type Environment string
+
+const (
+	Testnet Environment = "https://api.etherealtest.net"
+	Mainnet Environment = "https://api.ethereal.trade"
+)
+
+func NewEtherealClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
 	client := &EtherealClient{
-		baseURL: "https://api.ethereal.trade",
+		baseURL: string(env),
 		http:    &http.Client{Timeout: 10 * time.Second},
 	}
 
@@ -52,11 +60,9 @@ func NewEtherealClient(ctx context.Context, pk string) (*EtherealClient, error) 
 	if err != nil {
 		return nil, errors.New("unable to parse private key, likely invalid format")
 	}
-	client.address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
+	client.Address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
 	// ethereal env setup
-	if err := client.InitDomain(ctx); err != nil {
-		return nil, errors.Join(errors.New("failed to fetch domain config: "), err)
-	}
+	client.InitDomain(ctx)
 
 	if err := client.InitSubaccount(ctx); err != nil {
 		return nil, errors.Join(errors.New("failed to fetch subaccount: "), err)
@@ -105,18 +111,18 @@ func (e *EtherealClient) do(ctx context.Context, method, path string, body any) 
 }
 
 // ---------- Setup ----------
-func (e *EtherealClient) InitDomain(ctx context.Context) error {
+func (e *EtherealClient) InitDomain(ctx context.Context) (string, error) {
 	// init eip 712 data from rpc
 	data, err := e.do(ctx, "GET", "/v1/rpc/config", nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	var resp struct {
 		Domain   abi.TypedDataDomain `json:"domain"`
 		SigTypes map[string]string   `json:"signatureTypes"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
-		return err
+		return "", err
 	}
 
 	// parse flattened type data
@@ -124,7 +130,7 @@ func (e *EtherealClient) InitDomain(ctx context.Context) error {
 	for primaryType, schema := range resp.SigTypes {
 		types, err := ParseTypeSchema(schema)
 		if err != nil {
-			return err
+			return "", err
 		}
 		parsedTypes[primaryType] = types
 	}
@@ -136,20 +142,20 @@ func (e *EtherealClient) InitDomain(ctx context.Context) error {
 		{Name: "verifyingContract", Type: "address"},
 	}
 
-	e.types = &abi.TypedData{
+	e.Types = &abi.TypedData{
 		Types:  parsedTypes,
 		Domain: resp.Domain,
 	}
 	// precompute domain hash, store globally
-	domainHash, err = e.types.HashStruct("EIP712Domain", e.types.Domain.Map())
+	domainHash, err = e.Types.HashStruct("EIP712Domain", e.Types.Domain.Map())
 	if err != nil {
-		return err
+		panic("failed to compute domain hash: " + err.Error())
 	}
-	return nil
+	return hex.EncodeToString(domainHash), nil
 }
 
 func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
-	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.address)
+	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.Address)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
 		return err

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,48 +13,25 @@ import (
 	ethereal "github.com/qiwi1272/ethereal-go/client"
 )
 
-func scale1e9(s string) (*big.Int, error) {
-	r := new(big.Rat)
-	if _, ok := r.SetString(s); !ok {
-		return nil, fmt.Errorf("bad decimal %q", s)
+func getTestOrder() ethereal.Order {
+	return ethereal.Order{
+		Sender:     "0xdeadbeef00000000000000000000000000000000",
+		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
+		Quantity:   "1",
+		Price:      "3000",
+		ReduceOnly: false,
+		Side:       ethereal.BUY,
+		EngineType: ethereal.PERPETUAL,
+		OnchainID:  2, // later -> ProductId
+		Nonce:      "1764897077655477722",
+		SignedAt:   int64(1764897077),
 	}
-	r.Mul(r, big.NewRat(1_000_000_000, 1))
-	n := new(big.Int)
-	n.Div(r.Num(), r.Denom())
-	return n, nil
 }
 
-func toMessage(o ethereal.Order) (abi.TypedDataMessage, error) {
-	qtyBig, err := scale1e9(o.Quantity)
-	if err != nil {
-		return abi.TypedDataMessage{}, err
-	}
-	priceBig, err := scale1e9(o.Price)
-	if err != nil {
-		return abi.TypedDataMessage{}, err
-	}
-
-	// even though we expect these values to be uint8 according to their signatures,
-	// setting them as native uint8 raises a compiler error. strings or big ints are accepted.
-	engine := big.NewInt(int64(o.EngineType))
-	side := big.NewInt(int64(o.Side))
-	id := big.NewInt(o.OnchainID)
-	sigTs := big.NewInt(o.SignedAt)
-
-	return abi.TypedDataMessage{
-		"sender":     o.Sender,
-		"subaccount": o.Subaccount,
-		"quantity":   qtyBig,
-		"price":      priceBig,
-		"reduceOnly": o.ReduceOnly,
-		"side":       side,
-		"engineType": engine,
-		"productId":  id,
-		"nonce":      o.Nonce,
-		"signedAt":   sigTs,
-	}, nil
+func reverseHex(s string) ([]byte, error) {
+	clean := strings.TrimPrefix(s, "0x")
+	return hex.DecodeString(clean)
 }
-
 func TestOrders(t *testing.T) {
 	orderType := abi.TypedData{
 		Types: abi.Types{"TradeOrder": []abi.Type{
@@ -67,24 +47,19 @@ func TestOrders(t *testing.T) {
 			{Name: "signedAt", Type: "uint64"},
 		}},
 	}
+	order := getTestOrder()
 
-	order := ethereal.Order{
-		Sender:     "0xdeadbeef00000000000000000000000000000000",
-		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
-		Quantity:   "1",
-		Price:      "3000",
-		ReduceOnly: false,
-		Side:       ethereal.BUY,
-		EngineType: ethereal.PERPETUAL,
-		OnchainID:  2, // later -> ProductId
-		Nonce:      "1764897077655477722",
-		SignedAt:   int64(1764897077),
-	}
-
-	message, err := toMessage(order) // clone from signing.go
+	message, err := order.ToMessage()
 	if err != nil {
 		panic(err)
 	}
+	// We do a pretty print of the message to visually inspect it during test runs.
+	// We convert it to to a json string for better readability.
+	messageJSON, err := json.MarshalIndent(message, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Order Message JSON:\n%s\n", string(messageJSON))
 
 	SenderBytes, err := orderType.EncodePrimitiveValue(orderType.Types["TradeOrder"][0].Type, message["sender"], 2)
 	if err != nil {
@@ -165,4 +140,67 @@ func TestOrders(t *testing.T) {
 	if common.Bytes2Hex(SignedAtBytes) != "0000000000000000000000000000000000000000000000000000000069323135" {
 		panic("SignedAtBytes")
 	}
+}
+
+// We test signing the order here as well, to ensure that the message encoding is correct.
+// If the encoding is wrong, the signature will also be wrong.
+func TestOrderSigning(t *testing.T) {
+
+	order := getTestOrder()
+	cxt := context.Background()
+	pk := "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a" // private key for 0xdeadbeef...
+	client, err := ethereal.NewEtherealClient(cxt, pk, ethereal.Testnet)
+
+	fmt.Println("Expected Signer address: ", client.Address)
+
+	domainHashString, err := client.InitDomain(cxt)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Domain Hash:", domainHashString)
+
+	expectedDomainHash := "baf501bc2614cf7092d082742580b04c176be1815f46e407eab1bc37ba543c05"
+	if domainHashString != expectedDomainHash {
+		panic("Domain hash does not match expected value")
+	}
+
+	msg, err := order.ToMessage()
+	if err != nil {
+		panic("Unable to convert order to message: " + err.Error())
+	}
+	messageHash, err := client.Types.HashStruct("TradeOrder", msg)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Message Hash:", common.Bytes2Hex(messageHash))
+	signature, err := ethereal.Sign(&order, "TradeOrder", client)
+	if err != nil {
+		panic(err)
+	}
+
+	domainBytes, err := reverseHex(domainHashString)
+	if err != nil {
+		panic(err)
+	}
+	fullHash := ethereal.MakeFullHash(domainBytes, messageHash)
+	fmt.Println("Full Hash:", common.Bytes2Hex(fullHash))
+
+	expectedSignature := "0x82aed7486e9855459f58537e413760597e689d3ba7b859f56b6edc730e044fff2888ccf92cd282a8299d8d6a76f8bf0aa93d97f30340c4bb0d27b626aca62f211b"
+	if signature != expectedSignature {
+		panic("Signature does not match expected value")
+	}
+	fmt.Println("Order Signature:", signature)
+
+	// We extract the exact payload
+
+	payload := ethereal.SignedGenericMessage{
+		Data:      order,
+		Signature: signature,
+	}
+	payloadJson, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Signed Order Payload JSON:\n", string(payloadJson))
+
 }

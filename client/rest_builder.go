@@ -29,12 +29,12 @@ func (p *Product) NewOrder(orderType OrderType, qty float64, px float64, reduce 
 	}
 }
 
-func (o *Order) toMessage() (abi.TypedDataMessage, error) {
-	qtyBig, err := scale1e9(o.Quantity)
+func (o *Order) ToMessage() (abi.TypedDataMessage, error) {
+	qtyBig, err := Scale1e9(o.Quantity)
 	if err != nil {
 		return abi.TypedDataMessage{}, err
 	}
-	priceBig, err := scale1e9(o.Price)
+	priceBig, err := Scale1e9(o.Price)
 	if err != nil {
 		return abi.TypedDataMessage{}, err
 	}
@@ -61,7 +61,7 @@ func (o *Order) toMessage() (abi.TypedDataMessage, error) {
 }
 
 func (o *Order) build(cl *EtherealClient) {
-	o.Sender = cl.address
+	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 	nonce := getNonce()
 
@@ -84,7 +84,7 @@ func NewCancelOrder(oids ...string) *CancelOrder {
 	}
 }
 
-func (o *CancelOrder) toMessage() (abi.TypedDataMessage, error) {
+func (o *CancelOrder) ToMessage() (abi.TypedDataMessage, error) {
 	return abi.TypedDataMessage{
 		"sender":     o.Sender,
 		"subaccount": o.Subaccount,
@@ -94,7 +94,7 @@ func (o *CancelOrder) toMessage() (abi.TypedDataMessage, error) {
 }
 
 func (o *CancelOrder) build(cl *EtherealClient) {
-	o.Sender = cl.address
+	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 
 	o.Nonce = getNonce()

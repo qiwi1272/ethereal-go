@@ -62,7 +62,10 @@ func NewEtherealClient(ctx context.Context, pk string, env Environment) (*Ethere
 	}
 	client.Address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
 	// ethereal env setup
-	client.InitDomain(ctx)
+	_, err = client.InitDomain(ctx)
+	if err != nil {
+		return nil, errors.New("unable to compute domain hash")
+	}
 
 	if err := client.InitSubaccount(ctx); err != nil {
 		return nil, errors.Join(errors.New("failed to fetch subaccount: "), err)
@@ -146,12 +149,13 @@ func (e *EtherealClient) InitDomain(ctx context.Context) (string, error) {
 		Types:  parsedTypes,
 		Domain: resp.Domain,
 	}
-	// precompute domain hash, store globally
-	domainHash, err = e.Types.HashStruct("EIP712Domain", e.Types.Domain.Map())
+
+	domain, err := e.Types.HashStruct("EIP712Domain", e.Types.Domain.Map())
 	if err != nil {
 		panic("failed to compute domain hash: " + err.Error())
 	}
-	return hex.EncodeToString(domainHash), nil
+	domainHash = domain
+	return hex.EncodeToString(domain), nil
 }
 
 func (e *EtherealClient) InitSubaccount(ctx context.Context) error {

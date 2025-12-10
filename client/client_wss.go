@@ -55,10 +55,10 @@ func NewWebSocketClient() *WebsocketClient {
 	}
 }
 
-func (ws *WebsocketClient) SubscribeToBook(p *Product) {
+func (ws *WebsocketClient) SubscribeToBook(productId string) {
 	req := map[string]any{
 		"type":      "BookDepth",
-		"productId": p.ID,
+		"productId": productId,
 	}
 	ws.socket.Emit("subscribe", req)
 }
@@ -67,10 +67,10 @@ func (ws *WebsocketClient) OnBookDepth(handler func(BookDepthStream)) {
 	ws.socket.OnEvent("BookDepth", handler)
 }
 
-func (ws *WebsocketClient) SubscribeToPrice(p *Product) {
+func (ws *WebsocketClient) SubscribeToPrice(productId string) {
 	req := map[string]any{
 		"type":      "MarketPrice",
-		"productId": p.ID,
+		"productId": productId,
 	}
 	ws.socket.Emit("subscribe", req)
 }
@@ -101,4 +101,8 @@ func (ws *WebsocketClient) SubscribeToOrder(s *Subaccount) {
 
 func (ws *WebsocketClient) OnOrder(handler func(OrderStream)) {
 	ws.socket.OnEvent("OrderUpdate", handler)
+}
+
+func (ws *WebsocketClient) OnDisconnect(handler func(sio.Reason)) {
+	ws.socket.OnDisconnect(handler)
 }

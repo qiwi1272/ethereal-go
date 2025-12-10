@@ -29,8 +29,8 @@ func main() {
 
 	ws := ethereal.NewWebSocketClient()
 
-	ws.SubscribeToBook(&eth_perp)
-	ws.SubscribeToPrice(&eth_perp)
+	ws.SubscribeToBook(eth_perp.ID)
+	ws.SubscribeToPrice(eth_perp.ID)
 
 	ws.SubscribeToFill(rest.Subaccount)
 	ws.SubscribeToOrder(rest.Subaccount)

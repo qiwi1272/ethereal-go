@@ -15,6 +15,20 @@ func getNonce() string {
 }
 
 // -------- ORDER CREATION --------
+func NewRawOrder(orderType OrderType, onchainId int64, marketType EngineType, qty float64, px float64, reduce bool, side OrderSide, tif TimeInForce) *Order {
+	return &Order{
+		Type:        orderType,
+		Quantity:    fmt.Sprintf("%.9f", qty),
+		Side:        side,
+		OnchainID:   onchainId,
+		EngineType:  marketType,
+		ReduceOnly:  reduce,
+		Price:       fmt.Sprintf("%.9f", px),
+		TimeInForce: tif,
+		PostOnly:    false,
+	}
+}
+
 func (p *Product) NewOrder(orderType OrderType, qty float64, px float64, reduce bool, side OrderSide, tif TimeInForce) *Order {
 	return &Order{
 		Type:        orderType,

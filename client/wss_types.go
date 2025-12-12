@@ -28,10 +28,10 @@ type OrderFillStream struct {
 		Type          OrderType `json:"type"`
 		Side          OrderSide `json:"side"`
 		ReduceOnly    bool      `json:"reduceOnly"`
-		FeeUsd        OrderType `json:"feeUsd"`
+		FeeUsd        string    `json:"feeUsd"`
 		IsMaker       bool      `json:"isMaker"`
-		ProductId     OrderType `json:"productId"`    // uuid
-		SubaccountId  OrderType `json:"subaccountId"` // uuid
+		ProductId     string    `json:"productId"`    // uuid
+		SubaccountId  string    `json:"subaccountId"` // uuid
 		CreatedAt     int64     `json:"createdAt"`
 	} `json:"data"`
 }

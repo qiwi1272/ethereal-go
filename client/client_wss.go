@@ -10,7 +10,7 @@ import (
 
 type WebsocketClient struct {
 	manager *sio.Manager
-	socket  sio.ClientSocket
+	Socket  sio.ClientSocket
 }
 
 func NewWebSocketClient() *WebsocketClient {
@@ -29,16 +29,16 @@ func NewWebSocketClient() *WebsocketClient {
 
 	wsClient := &WebsocketClient{
 		manager: manager,
-		socket:  socket,
+		Socket:  socket,
 	}
 
 	// native events + open connection
 	go func(ws *WebsocketClient) {
-		ws.socket.OnConnect(func() {
+		ws.Socket.OnConnect(func() {
 			fmt.Println("connected via socket to ethereal")
 		})
 
-		ws.socket.OnDisconnect(func(reason sio.Reason) {
+		ws.Socket.OnDisconnect(func(reason sio.Reason) {
 			fmt.Println("ethereal socket disconnected: ", reason)
 		})
 
@@ -46,12 +46,12 @@ func NewWebSocketClient() *WebsocketClient {
 			fmt.Printf("ethereal socket manager error: %v\n", err)
 		})
 
-		ws.socket.Connect()
+		ws.Socket.Connect()
 	}(wsClient)
 
 	return &WebsocketClient{
 		manager: manager,
-		socket:  socket,
+		Socket:  socket,
 	}
 }
 
@@ -60,11 +60,11 @@ func (ws *WebsocketClient) SubscribeToBook(productId string) {
 		"type":      "BookDepth",
 		"productId": productId,
 	}
-	ws.socket.Emit("subscribe", req)
+	ws.Socket.Emit("subscribe", req)
 }
 
 func (ws *WebsocketClient) OnBookDepth(handler func(BookDepthStream)) {
-	ws.socket.OnEvent("BookDepth", handler)
+	ws.Socket.OnEvent("BookDepth", handler)
 }
 
 func (ws *WebsocketClient) SubscribeToPrice(productId string) {
@@ -72,11 +72,11 @@ func (ws *WebsocketClient) SubscribeToPrice(productId string) {
 		"type":      "MarketPrice",
 		"productId": productId,
 	}
-	ws.socket.Emit("subscribe", req)
+	ws.Socket.Emit("subscribe", req)
 }
 
 func (ws *WebsocketClient) OnPrice(handler func(MarketPriceStream)) {
-	ws.socket.OnEvent("MarketPrice", handler)
+	ws.Socket.OnEvent("MarketPrice", handler)
 }
 
 func (ws *WebsocketClient) SubscribeToFill(s *Subaccount) {
@@ -84,11 +84,11 @@ func (ws *WebsocketClient) SubscribeToFill(s *Subaccount) {
 		"type":         "OrderFill",
 		"subaccountId": s.Id,
 	}
-	ws.socket.Emit("subscribe", req)
+	ws.Socket.Emit("subscribe", req)
 }
 
 func (ws *WebsocketClient) OnFill(handler func(OrderFillStream)) {
-	ws.socket.OnEvent("OrderFill", handler)
+	ws.Socket.OnEvent("OrderFill", handler)
 }
 
 func (ws *WebsocketClient) SubscribeToOrder(s *Subaccount) {
@@ -96,13 +96,13 @@ func (ws *WebsocketClient) SubscribeToOrder(s *Subaccount) {
 		"type":      "OrderUpdate",
 		"productId": s.Id,
 	}
-	ws.socket.Emit("subscribe", req)
+	ws.Socket.Emit("subscribe", req)
 }
 
 func (ws *WebsocketClient) OnOrder(handler func(OrderStream)) {
-	ws.socket.OnEvent("OrderUpdate", handler)
+	ws.Socket.OnEvent("OrderUpdate", handler)
 }
 
 func (ws *WebsocketClient) OnDisconnect(handler func(sio.Reason)) {
-	ws.socket.OnDisconnect(handler)
+	ws.Socket.OnDisconnect(handler)
 }

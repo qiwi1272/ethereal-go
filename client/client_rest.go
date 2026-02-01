@@ -41,9 +41,22 @@ const (
 )
 
 func NewEtherealClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
+	transport := &http.Transport{
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   2 * time.Second,
+		ExpectContinueTimeout: 0,
+		DisableCompression:    true,
+		ForceAttemptHTTP2:     true,
+	}
+
 	client := &EtherealClient{
 		baseURL: string(env),
-		http:    &http.Client{Timeout: 10 * time.Second},
+		http: &http.Client{
+			Transport: transport,
+			Timeout:   10 * time.Second,
+		},
 	}
 
 	// load pk
@@ -185,6 +198,20 @@ func (e *EtherealClient) GetPosition(ctx context.Context) ([]Position, error) {
 		return nil, err
 	}
 	var resp Response[[]Position]
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
+}
+
+func (e *EtherealClient) GetAccountBalance(ctx context.Context) ([]AccountBalance, error) {
+	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.Subaccount.Id)
+	data, err := e.do(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	var resp Response[[]AccountBalance]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}

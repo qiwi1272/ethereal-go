@@ -110,3 +110,14 @@ type Position struct {
 	IsLiquidated          bool      `json:"isLiquidated"`
 	LiquidationPrice      string    `json:"liquidationPrice"`
 }
+
+type AccountBalance struct {
+	SubaccountId string `json:"subaccountId"`
+	TokenId      string `json:"tokenId"`
+	TokenAddress string `json:"tokenAddress"`
+	TokenName    string `json:"tokenName"`
+	Amount       string `json:"amount"`
+	Available    string `json:"available"`
+	TotalUsed    string `json:"totalUsed"`
+	UpdatedAt    uint64 `json:"updatedAt"`
+}

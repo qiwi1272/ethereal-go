@@ -8,12 +8,12 @@ import (
 	eio "github.com/karagenc/socket.io-go/engine.io"
 )
 
-type WebsocketClient struct {
+type SocketIOClient struct {
 	manager *sio.Manager
 	Socket  sio.ClientSocket
 }
 
-func NewWebSocketClient() *WebsocketClient {
+func NewSocketIOClient() *SocketIOClient {
 	baseURL := "wss://ws.ethereal.trade/socket.io/"
 	retryDelay := time.Minute
 	config := &sio.ManagerConfig{
@@ -27,13 +27,13 @@ func NewWebSocketClient() *WebsocketClient {
 	manager := sio.NewManager(baseURL, config)
 	socket := manager.Socket("/v1/stream", nil)
 
-	wsClient := &WebsocketClient{
+	wsClient := &SocketIOClient{
 		manager: manager,
 		Socket:  socket,
 	}
 
 	// native events + open connection
-	go func(ws *WebsocketClient) {
+	go func(ws *SocketIOClient) {
 		ws.Socket.OnConnect(func() {
 			fmt.Println("connected via socket to ethereal")
 		})
@@ -49,13 +49,13 @@ func NewWebSocketClient() *WebsocketClient {
 		ws.Socket.Connect()
 	}(wsClient)
 
-	return &WebsocketClient{
+	return &SocketIOClient{
 		manager: manager,
 		Socket:  socket,
 	}
 }
 
-func (ws *WebsocketClient) SubscribeToBook(productId string) {
+func (ws *SocketIOClient) SubscribeToBook(productId string) {
 	req := map[string]any{
 		"type":      "BookDepth",
 		"productId": productId,
@@ -63,11 +63,11 @@ func (ws *WebsocketClient) SubscribeToBook(productId string) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *WebsocketClient) OnBookDepth(handler func(BookDepthStream)) {
+func (ws *SocketIOClient) OnBookDepth(handler func(BookDepthStream)) {
 	ws.Socket.OnEvent("BookDepth", handler)
 }
 
-func (ws *WebsocketClient) SubscribeToPrice(productId string) {
+func (ws *SocketIOClient) SubscribeToPrice(productId string) {
 	req := map[string]any{
 		"type":      "MarketPrice",
 		"productId": productId,
@@ -75,11 +75,11 @@ func (ws *WebsocketClient) SubscribeToPrice(productId string) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *WebsocketClient) OnPrice(handler func(MarketPriceStream)) {
+func (ws *SocketIOClient) OnPrice(handler func(MarketPriceStream)) {
 	ws.Socket.OnEvent("MarketPrice", handler)
 }
 
-func (ws *WebsocketClient) SubscribeToFill(s *Subaccount) {
+func (ws *SocketIOClient) SubscribeToFill(s *Subaccount) {
 	req := map[string]any{
 		"type":         "OrderFill",
 		"subaccountId": s.Id,
@@ -87,11 +87,11 @@ func (ws *WebsocketClient) SubscribeToFill(s *Subaccount) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *WebsocketClient) OnFill(handler func(OrderFillStream)) {
+func (ws *SocketIOClient) OnFill(handler func(OrderFillStream)) {
 	ws.Socket.OnEvent("OrderFill", handler)
 }
 
-func (ws *WebsocketClient) SubscribeToOrder(s *Subaccount) {
+func (ws *SocketIOClient) SubscribeToOrder(s *Subaccount) {
 	req := map[string]any{
 		"type":      "OrderUpdate",
 		"productId": s.Id,
@@ -99,10 +99,10 @@ func (ws *WebsocketClient) SubscribeToOrder(s *Subaccount) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *WebsocketClient) OnOrder(handler func(OrderStream)) {
+func (ws *SocketIOClient) OnOrder(handler func(OrderStream)) {
 	ws.Socket.OnEvent("OrderUpdate", handler)
 }
 
-func (ws *WebsocketClient) OnDisconnect(handler func(sio.Reason)) {
+func (ws *SocketIOClient) OnDisconnect(handler func(sio.Reason)) {
 	ws.Socket.OnDisconnect(handler)
 }

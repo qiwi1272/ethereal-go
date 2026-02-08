@@ -27,7 +27,7 @@ func main() {
 
 	eth_perp := products["ETHUSD"]
 
-	ws := ethereal.NewWebSocketClient()
+	ws := ethereal.NewSocketIOClient()
 
 	ws.SubscribeToBook(eth_perp.ID)
 	ws.SubscribeToPrice(eth_perp.ID)

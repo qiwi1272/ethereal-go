@@ -1,4 +1,4 @@
-package ethereal
+package socketio_client
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
+	"github.com/qiwi1272/ethereal-go"
 )
 
 type SocketIOClient struct {
@@ -79,7 +80,7 @@ func (ws *SocketIOClient) OnPrice(handler func(MarketPriceStream)) {
 	ws.Socket.OnEvent("MarketPrice", handler)
 }
 
-func (ws *SocketIOClient) SubscribeToFill(s *Subaccount) {
+func (ws *SocketIOClient) SubscribeToFill(s *ethereal.Subaccount) {
 	req := map[string]any{
 		"type":         "OrderFill",
 		"subaccountId": s.Id,
@@ -91,7 +92,7 @@ func (ws *SocketIOClient) OnFill(handler func(OrderFillStream)) {
 	ws.Socket.OnEvent("OrderFill", handler)
 }
 
-func (ws *SocketIOClient) SubscribeToOrder(s *Subaccount) {
+func (ws *SocketIOClient) SubscribeToOrder(s *ethereal.Subaccount) {
 	req := map[string]any{
 		"type":      "OrderUpdate",
 		"productId": s.Id,

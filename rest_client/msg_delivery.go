@@ -1,4 +1,4 @@
-package ethereal
+package rest_client
 
 import (
 	"context"

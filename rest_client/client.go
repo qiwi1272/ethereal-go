@@ -1,4 +1,4 @@
-package ethereal
+package rest_client
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/qiwi1272/ethereal-go"
 )
 
 const USER_AGENT = "ethereal-go-sdk/1.0.0"
@@ -21,16 +22,10 @@ const USER_AGENT = "ethereal-go-sdk/1.0.0"
 type EtherealClient struct {
 	baseURL    string
 	http       *http.Client
-	Subaccount *Subaccount
+	Subaccount *ethereal.Subaccount
 	Types      *abi.TypedData
 	pk         *ecdsa.PrivateKey
 	Address    string
-}
-
-type Subaccount struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Account string `json:"account"`
 }
 
 type Environment string
@@ -40,7 +35,7 @@ const (
 	Mainnet Environment = "https://api.ethereal.trade"
 )
 
-func NewEtherealClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
+func NewRestClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
 	transport := &http.Transport{
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   100,
@@ -177,7 +172,7 @@ func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	var resp Response[[]Subaccount]
+	var resp Response[[]ethereal.Subaccount]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package ethereal
+package wss_client
 
 import "encoding/json"
 

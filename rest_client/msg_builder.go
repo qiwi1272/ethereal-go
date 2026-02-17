@@ -1,4 +1,4 @@
-package ethereal
+package rest_client
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/qiwi1272/ethereal-go"
 )
 
 func getNonce() string {
@@ -15,7 +16,16 @@ func getNonce() string {
 }
 
 // -------- ORDER CREATION --------
-func NewRawOrder(orderType OrderType, onchainId int64, marketType EngineType, qty float64, px float64, reduce bool, side OrderSide, tif TimeInForce) *Order {
+func NewRawOrder(
+	orderType ethereal.OrderType,
+	onchainId int64,
+	marketType ethereal.EngineType,
+	qty float64,
+	px float64,
+	reduce bool,
+	side ethereal.OrderSide,
+	tif ethereal.TimeInForce,
+) *Order {
 	return &Order{
 		Type:        orderType,
 		Quantity:    fmt.Sprintf("%.9f", qty),
@@ -29,7 +39,14 @@ func NewRawOrder(orderType OrderType, onchainId int64, marketType EngineType, qt
 	}
 }
 
-func (p *Product) NewOrder(orderType OrderType, qty float64, px float64, reduce bool, side OrderSide, tif TimeInForce) *Order {
+func (p *Product) NewOrder(
+	orderType ethereal.OrderType,
+	qty float64,
+	px float64,
+	reduce bool,
+	side ethereal.OrderSide,
+	tif ethereal.TimeInForce,
+) *Order {
 	return &Order{
 		Type:        orderType,
 		Quantity:    fmt.Sprintf("%.9f", qty),

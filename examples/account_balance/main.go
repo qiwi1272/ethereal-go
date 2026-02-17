@@ -22,6 +22,11 @@ func main() {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
 	// fetch balance
-	client.GetAccountBalance(ctx)
+	balance, err := client.GetAccountBalance(ctx)
+	if err != nil {
+		log.Fatalf("failed to get balance: %v", err)
+	}
+
+	log.Println(balance)
 
 }

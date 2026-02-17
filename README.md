@@ -18,45 +18,17 @@ Getting started
 - Requires Go 1.25+.
 - Install: `go get github.com/qiwi1272/ethereal-go`
 
-Example
+Example Usage
 -------
-```go
-package main
+From the client directory:
+`make all`
+`ETHEREAL_PK=0x0000 bin/example_account_balance`
 
-import (
-    "context"
-    "log"
-
-    "github.com/qiwi1272/ethereal-go/ethereal"
-)
-
-func main() {
-    ctx := context.Background()
-
-    // Uses ETHEREAL_PK if private key argument is empty
-    client, err := ethereal.NewEtherealClient(ctx, "")
-    if err != nil {
-        log.Fatal(err)
-    }
-	products, err := client.GetProductMap(ctx)
-	if err != nil {
-		log.Fatalf("failed to fetch products: %v", err)
-	}
-
-    product := products["ETHUSD"]
-    order := product.NewOrder(ethereal.ORDER_LIMIT, 0.123, 1000.1, false, ethereal.BUY, ethereal.TIF_GTD)
-
-	placed, err := order.Send(ctx, client)
-	if err != nil {
-		log.Fatalf("failed to place limit order: %v", err)
-	}
-
-    log.Printf("Order created: %+v\n", res)
-}
-```
 For more complete usage examples (batching, cancel orders, websocket subscriptions, etc.),
 see the [examples/](./examples/) folder in this repository.
 
+
+```
 Configuration Notes
 -----
 - If no private key is passed to `NewEtherealClient`, the library uses the `ETHEREAL_PK` environment variable.

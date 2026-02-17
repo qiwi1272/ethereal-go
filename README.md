@@ -21,8 +21,8 @@ Getting started
 Example Usage
 -------
 From the client directory:
-`make all`
-`ETHEREAL_PK=0x0000 bin/example_account_balance`
+- `make all`
+- `ETHEREAL_PK=0x0000 bin/example_account_balance`
 
 For more complete usage examples (batching, cancel orders, websocket subscriptions, etc.),
 see the [examples/](./examples/) folder in this repository.

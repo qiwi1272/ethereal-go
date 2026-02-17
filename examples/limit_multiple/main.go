@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	ethereal "github.com/qiwi1272/ethereal-go/client"
+	"github.com/qiwi1272/ethereal-go"
+	restClient "github.com/qiwi1272/ethereal-go/rest_client"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	// create client and fetch products
-	client, err := ethereal.NewEtherealClient(ctx, "", ethereal.Mainnet)
+	client, err := restClient.NewRestClient(ctx, "", restClient.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -30,7 +31,7 @@ func main() {
 	// place 3 orders for ethusd
 	eth_perp := products["ETHUSD"]
 
-	orders := make([]*ethereal.Order, 3)
+	orders := make([]*restClient.Order, 3)
 	for i := range orders {
 		px := 1000.1 + float64(i)
 		orders[i] = eth_perp.NewOrder(ethereal.ORDER_LIMIT, 0.123, px, false, ethereal.BUY, ethereal.TIF_GTD)
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	// cancel the orders we just placed
-	cancel := ethereal.NewCancelOrderFromCreated(placed...)
+	cancel := restClient.NewCancelOrderFromCreated(placed...)
 	cancelled, err := cancel.Send(ctx, client)
 	if err != nil {
 		log.Fatalf("failed to cancel limit order: %v", err)

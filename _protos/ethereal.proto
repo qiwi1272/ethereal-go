@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package spoke.v1;
+
+option go_package = "ethereal-go/_pb;pb";
+
+message PriceLevel {
+  string price = 1;
+  string size  = 2;
+}
+
+message BookDiff {
+  repeated PriceLevel bids = 1;
+  repeated PriceLevel asks = 2;
+  repeated PriceLevel b = 3;
+  repeated PriceLevel a = 4;
+  string symbol = 5;
+}

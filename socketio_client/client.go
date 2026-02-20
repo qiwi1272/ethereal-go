@@ -6,12 +6,16 @@ import (
 
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/qiwi1272/ethereal-go"
+	pb "github.com/qiwi1272/ethereal-go/_pb"
 )
 
 type SocketIOClient struct {
 	manager *sio.Manager
 	Socket  sio.ClientSocket
+	pm      *protojson.UnmarshalOptions
 }
 
 func NewSocketIOClient() *SocketIOClient {
@@ -31,6 +35,7 @@ func NewSocketIOClient() *SocketIOClient {
 	wsClient := &SocketIOClient{
 		manager: manager,
 		Socket:  socket,
+		pm:      &protojson.UnmarshalOptions{DiscardUnknown: true},
 	}
 
 	// native events + open connection
@@ -62,10 +67,16 @@ func (ws *SocketIOClient) SubscribeToBook(productId string) {
 		"productId": productId,
 	}
 	ws.Socket.Emit("subscribe", req)
+	fmt.Println("subbed")
 }
 
-func (ws *SocketIOClient) OnBookDepth(handler func(BookDepthStream)) {
-	ws.Socket.OnEvent("BookDepth", handler)
+func (ws *SocketIOClient) OnBookDepth(handler func(*pb.BookDiff)) {
+	ws.Socket.OnEvent("BookDepth", func(args ...any) {
+		fmt.Printf("argc=%d\n", len(args))
+		for i, a := range args {
+			fmt.Printf("  arg[%d] type=%T val=%#v\n", i, a, a)
+		}
+	})
 }
 
 func (ws *SocketIOClient) SubscribeToPrice(productId string) {

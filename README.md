@@ -51,19 +51,6 @@ To format the code, use the following command:
 ```bash
 make fmt
 ```
-## Dependency Management
-To tidy up dependencies, use the following command:
-
-```bash
-make tidy
-```
-
-## To install dependencies, use the following command:
-
-```bash
-make deps
-```
-
 ## Testing
 
 To run tests, use the following command:
@@ -71,6 +58,12 @@ To run tests, use the following command:
 ```bash
 make test
 ```
+## Proto
+To build the protobuf spec, use the following command:
+```bash
+make proto
+```
+
 ## Building
 To build the client, use the following command:
 ```bash

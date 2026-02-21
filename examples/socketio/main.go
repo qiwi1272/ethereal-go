@@ -19,7 +19,7 @@ func main() {
 	}
 	ctx := context.Background()
 	// create client and fetch products
-	rest, err := restClient.NewRestClient(ctx, "", restClient.Testnet)
+	rest, err := restClient.NewRestClient(ctx, "", restClient.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -30,32 +30,19 @@ func main() {
 
 	eth_perp := products["ETHUSD"]
 
-	fmt.Println(eth_perp.ID)
-
 	ws := socketioClient.NewSocketIOClient()
 
-	ws.Socket.OnEvent("BookDepth", func(args ...any) {
-		fmt.Printf("argc=%d\n", len(args))
-		for i, a := range args {
-			fmt.Printf("  arg[%d] type=%T val=%#v\n", i, a, a)
-		}
-	})
-	ws.OnPrice(priceHandler)
+	ws.OnBookDepth(bookHandler)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	ws.SubscribeToBook(eth_perp.ID)
-	ws.SubscribeToPrice(eth_perp.ID)
 
 	select {}
 }
 
 func bookHandler(v *pb.BookDiff) {
-	fmt.Printf("BookDepth update: %+v\n", v.Symbol)
+	fmt.Printf("BookDepth update: %+v\n", v.ProductId)
 	fmt.Printf("BookDepth update: %+v\n", v.Bids)
 	fmt.Printf("BookDepth update: %+v\n", v.Asks)
-}
-
-func priceHandler(v socketioClient.MarketPriceStream) {
-	fmt.Printf("priceHandler update: %+v\n", v)
 }

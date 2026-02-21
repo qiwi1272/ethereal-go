@@ -31,7 +31,7 @@ see the [examples/](./examples/) folder in this repository.
 - All signable request messages implement the `Signable` interface.
 - Only one subaccount is currently supported; by default the first one discovered is used.
 
-````
+```
 Client Status
 -----
 - Other methods will be added as they are supported and or needed.
@@ -41,13 +41,29 @@ Client Status
 Contributing
 -------------
 Contributions are welcome! Please open issues or pull requests as needed.
+```
 
 ## Code Formatting
+
 To format the code, use the following command:
 
 ```bash
 make fmt
-````
+```
+
+## Dependency Management
+
+To tidy up dependencies, use the following command:
+
+```bash
+make tidy
+```
+
+## To install dependencies, use the following command:
+
+```bash
+make deps
+```
 
 ## Testing
 
@@ -55,6 +71,14 @@ To run tests, use the following command:
 
 ```bash
 make test
+```
+
+## Proto
+
+To build the protobuf spec, use the following command:
+
+```bash
+make proto
 ```
 
 ## Building

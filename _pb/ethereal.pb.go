@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type PriceLevel struct {
+type DiffLevel struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Price         string                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
 	Size          string                 `protobuf:"bytes,2,opt,name=size,proto3" json:"size,omitempty"`
@@ -29,20 +29,20 @@ type PriceLevel struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PriceLevel) Reset() {
-	*x = PriceLevel{}
+func (x *DiffLevel) Reset() {
+	*x = DiffLevel{}
 	mi := &file_ethereal_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PriceLevel) String() string {
+func (x *DiffLevel) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PriceLevel) ProtoMessage() {}
+func (*DiffLevel) ProtoMessage() {}
 
-func (x *PriceLevel) ProtoReflect() protoreflect.Message {
+func (x *DiffLevel) ProtoReflect() protoreflect.Message {
 	mi := &file_ethereal_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,19 +54,19 @@ func (x *PriceLevel) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PriceLevel.ProtoReflect.Descriptor instead.
-func (*PriceLevel) Descriptor() ([]byte, []int) {
+// Deprecated: Use DiffLevel.ProtoReflect.Descriptor instead.
+func (*DiffLevel) Descriptor() ([]byte, []int) {
 	return file_ethereal_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PriceLevel) GetPrice() string {
+func (x *DiffLevel) GetPrice() string {
 	if x != nil {
 		return x.Price
 	}
 	return ""
 }
 
-func (x *PriceLevel) GetSize() string {
+func (x *DiffLevel) GetSize() string {
 	if x != nil {
 		return x.Size
 	}
@@ -74,14 +74,14 @@ func (x *PriceLevel) GetSize() string {
 }
 
 type BookDiff struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bids          []*PriceLevel          `protobuf:"bytes,1,rep,name=bids,proto3" json:"bids,omitempty"`
-	Asks          []*PriceLevel          `protobuf:"bytes,2,rep,name=asks,proto3" json:"asks,omitempty"`
-	B             []*PriceLevel          `protobuf:"bytes,3,rep,name=b,proto3" json:"b,omitempty"`
-	A             []*PriceLevel          `protobuf:"bytes,4,rep,name=a,proto3" json:"a,omitempty"`
-	Symbol        string                 `protobuf:"bytes,5,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ProductId         string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	Timestamp         int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	PreviousTimestamp int64                  `protobuf:"varint,3,opt,name=previous_timestamp,json=previousTimestamp,proto3" json:"previous_timestamp,omitempty"`
+	Asks              []*DiffLevel           `protobuf:"bytes,4,rep,name=asks,proto3" json:"asks,omitempty"`
+	Bids              []*DiffLevel           `protobuf:"bytes,5,rep,name=bids,proto3" json:"bids,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *BookDiff) Reset() {
@@ -114,56 +114,56 @@ func (*BookDiff) Descriptor() ([]byte, []int) {
 	return file_ethereal_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *BookDiff) GetBids() []*PriceLevel {
+func (x *BookDiff) GetProductId() string {
 	if x != nil {
-		return x.Bids
+		return x.ProductId
 	}
-	return nil
+	return ""
 }
 
-func (x *BookDiff) GetAsks() []*PriceLevel {
+func (x *BookDiff) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *BookDiff) GetPreviousTimestamp() int64 {
+	if x != nil {
+		return x.PreviousTimestamp
+	}
+	return 0
+}
+
+func (x *BookDiff) GetAsks() []*DiffLevel {
 	if x != nil {
 		return x.Asks
 	}
 	return nil
 }
 
-func (x *BookDiff) GetB() []*PriceLevel {
+func (x *BookDiff) GetBids() []*DiffLevel {
 	if x != nil {
-		return x.B
+		return x.Bids
 	}
 	return nil
-}
-
-func (x *BookDiff) GetA() []*PriceLevel {
-	if x != nil {
-		return x.A
-	}
-	return nil
-}
-
-func (x *BookDiff) GetSymbol() string {
-	if x != nil {
-		return x.Symbol
-	}
-	return ""
 }
 
 var File_ethereal_proto protoreflect.FileDescriptor
 
 const file_ethereal_proto_rawDesc = "" +
 	"\n" +
-	"\x0eethereal.proto\x12\bspoke.v1\"6\n" +
-	"\n" +
-	"PriceLevel\x12\x14\n" +
+	"\x0eethereal.proto\x12\bspoke.v1\"5\n" +
+	"\tDiffLevel\x12\x14\n" +
 	"\x05price\x18\x01 \x01(\tR\x05price\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\tR\x04size\"\xbe\x01\n" +
-	"\bBookDiff\x12(\n" +
-	"\x04bids\x18\x01 \x03(\v2\x14.spoke.v1.PriceLevelR\x04bids\x12(\n" +
-	"\x04asks\x18\x02 \x03(\v2\x14.spoke.v1.PriceLevelR\x04asks\x12\"\n" +
-	"\x01b\x18\x03 \x03(\v2\x14.spoke.v1.PriceLevelR\x01b\x12\"\n" +
-	"\x01a\x18\x04 \x03(\v2\x14.spoke.v1.PriceLevelR\x01a\x12\x16\n" +
-	"\x06symbol\x18\x05 \x01(\tR\x06symbolB\x14Z\x12ethereal-go/_pb;pbb\x06proto3"
+	"\x04size\x18\x02 \x01(\tR\x04size\"\xc8\x01\n" +
+	"\bBookDiff\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1c\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
+	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12'\n" +
+	"\x04asks\x18\x04 \x03(\v2\x13.spoke.v1.DiffLevelR\x04asks\x12'\n" +
+	"\x04bids\x18\x05 \x03(\v2\x13.spoke.v1.DiffLevelR\x04bidsB\x14Z\x12ethereal-go/_pb;pbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once
@@ -179,19 +179,17 @@ func file_ethereal_proto_rawDescGZIP() []byte {
 
 var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_ethereal_proto_goTypes = []any{
-	(*PriceLevel)(nil), // 0: spoke.v1.PriceLevel
-	(*BookDiff)(nil),   // 1: spoke.v1.BookDiff
+	(*DiffLevel)(nil), // 0: spoke.v1.DiffLevel
+	(*BookDiff)(nil),  // 1: spoke.v1.BookDiff
 }
 var file_ethereal_proto_depIdxs = []int32{
-	0, // 0: spoke.v1.BookDiff.bids:type_name -> spoke.v1.PriceLevel
-	0, // 1: spoke.v1.BookDiff.asks:type_name -> spoke.v1.PriceLevel
-	0, // 2: spoke.v1.BookDiff.b:type_name -> spoke.v1.PriceLevel
-	0, // 3: spoke.v1.BookDiff.a:type_name -> spoke.v1.PriceLevel
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0, // 0: spoke.v1.BookDiff.asks:type_name -> spoke.v1.DiffLevel
+	0, // 1: spoke.v1.BookDiff.bids:type_name -> spoke.v1.DiffLevel
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_ethereal_proto_init() }

@@ -1,6 +1,7 @@
 package socketio_client
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -61,21 +62,56 @@ func NewSocketIOClient() *SocketIOClient {
 	}
 }
 
+// avoid writing our own stream parser and use rawMessage
+
 func (ws *SocketIOClient) SubscribeToBook(productId string) {
 	req := map[string]any{
 		"type":      "BookDepth",
 		"productId": productId,
 	}
 	ws.Socket.Emit("subscribe", req)
-	fmt.Println("subbed")
 }
 
+const pid_prefix_len = len("{\"productId\":")
+const ts_prefix_len = len(",\"timestamp\":")
+const prev_ts_prefix_len = len("\"previousTimestamp\":")
+const asks_prefix_len = len("\"asks\":")
+const bids_prefix_len = len(",\"bids\":")
+
 func (ws *SocketIOClient) OnBookDepth(handler func(*pb.BookDiff)) {
-	ws.Socket.OnEvent("BookDepth", func(args ...any) {
-		fmt.Printf("argc=%d\n", len(args))
-		for i, a := range args {
-			fmt.Printf("  arg[%d] type=%T val=%#v\n", i, a, a)
+	ws.Socket.OnEvent("BookDepth", func(bytes json.RawMessage) {
+
+		diff := &pb.BookDiff{}
+
+		var next int
+		var err error
+
+		bytes = bytes[pid_prefix_len:] // consume {"productId":
+		if next, diff.ProductId, err = pb.ReadStringAt(bytes, 0); err != nil {
+			panic(err)
 		}
+
+		bytes = bytes[next+ts_prefix_len:] // consume ,"timestamp":
+		if next, diff.Timestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
+			panic(err)
+		}
+
+		bytes = bytes[next+prev_ts_prefix_len:] // consume "previousTimestamp":
+		if next, diff.PreviousTimestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
+			panic(err)
+		}
+
+		bytes = bytes[next+asks_prefix_len:] // consume "asks":
+		if next, err = diff.DecodeDiffSideMsg(bytes, true); err != nil {
+			panic(err)
+		}
+
+		bytes = bytes[next+bids_prefix_len:] // consume ,"bids":
+		if next, err = diff.DecodeDiffSideMsg(bytes, false); err != nil {
+			panic(err)
+		}
+
+		handler(diff)
 	})
 }
 

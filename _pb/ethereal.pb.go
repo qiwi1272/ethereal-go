@@ -4,7 +4,7 @@
 // 	protoc        v3.21.12
 // source: ethereal.proto
 
-package pb
+package etherealpb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -163,7 +163,7 @@ const file_ethereal_proto_rawDesc = "" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
 	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12'\n" +
 	"\x04asks\x18\x04 \x03(\v2\x13.ethereal.DiffLevelR\x04asks\x12'\n" +
-	"\x04bids\x18\x05 \x03(\v2\x13.ethereal.DiffLevelR\x04bidsB\x14Z\x12ethereal-go/_pb;pbb\x06proto3"
+	"\x04bids\x18\x05 \x03(\v2\x13.ethereal.DiffLevelR\x04bidsB0Z.github.com/qiwi1272/ethereal-go/_pb;etherealpbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once

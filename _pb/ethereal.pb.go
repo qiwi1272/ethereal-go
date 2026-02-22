@@ -21,28 +21,82 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type DiffLevel struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Price         string                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
-	Size          string                 `protobuf:"bytes,2,opt,name=size,proto3" json:"size,omitempty"`
+type ExchType int32
+
+const (
+	ExchType_TYPE_UNKNOWN ExchType = 0
+	ExchType_TYPE_SPOT    ExchType = 1
+	ExchType_TYPE_PERPS   ExchType = 2
+)
+
+// Enum value maps for ExchType.
+var (
+	ExchType_name = map[int32]string{
+		0: "TYPE_UNKNOWN",
+		1: "TYPE_SPOT",
+		2: "TYPE_PERPS",
+	}
+	ExchType_value = map[string]int32{
+		"TYPE_UNKNOWN": 0,
+		"TYPE_SPOT":    1,
+		"TYPE_PERPS":   2,
+	}
+)
+
+func (x ExchType) Enum() *ExchType {
+	p := new(ExchType)
+	*p = x
+	return p
+}
+
+func (x ExchType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ExchType) Descriptor() protoreflect.EnumDescriptor {
+	return file_ethereal_proto_enumTypes[0].Descriptor()
+}
+
+func (ExchType) Type() protoreflect.EnumType {
+	return &file_ethereal_proto_enumTypes[0]
+}
+
+func (x ExchType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ExchType.Descriptor instead.
+func (ExchType) EnumDescriptor() ([]byte, []int) {
+	return file_ethereal_proto_rawDescGZIP(), []int{0}
+}
+
+type Envelope struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Exchange ExchType               `protobuf:"varint,1,opt,name=exchange,proto3,enum=rim.v1.ethereal.ExchType" json:"exchange,omitempty"`
+	Sequence uint64                 `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Ts       int64                  `protobuf:"varint,3,opt,name=ts,proto3" json:"ts,omitempty"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*Envelope_Diff
+	Payload       isEnvelope_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DiffLevel) Reset() {
-	*x = DiffLevel{}
+func (x *Envelope) Reset() {
+	*x = Envelope{}
 	mi := &file_ethereal_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DiffLevel) String() string {
+func (x *Envelope) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DiffLevel) ProtoMessage() {}
+func (*Envelope) ProtoMessage() {}
 
-func (x *DiffLevel) ProtoReflect() protoreflect.Message {
+func (x *Envelope) ProtoReflect() protoreflect.Message {
 	mi := &file_ethereal_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,116 +108,75 @@ func (x *DiffLevel) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DiffLevel.ProtoReflect.Descriptor instead.
-func (*DiffLevel) Descriptor() ([]byte, []int) {
+// Deprecated: Use Envelope.ProtoReflect.Descriptor instead.
+func (*Envelope) Descriptor() ([]byte, []int) {
 	return file_ethereal_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *DiffLevel) GetPrice() string {
+func (x *Envelope) GetExchange() ExchType {
 	if x != nil {
-		return x.Price
+		return x.Exchange
 	}
-	return ""
+	return ExchType_TYPE_UNKNOWN
 }
 
-func (x *DiffLevel) GetSize() string {
+func (x *Envelope) GetSequence() uint64 {
 	if x != nil {
-		return x.Size
+		return x.Sequence
 	}
-	return ""
+	return 0
 }
 
-type BookDiff struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	ProductId         string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	Timestamp         int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	PreviousTimestamp int64                  `protobuf:"varint,3,opt,name=previous_timestamp,json=previousTimestamp,proto3" json:"previous_timestamp,omitempty"`
-	Asks              []*DiffLevel           `protobuf:"bytes,4,rep,name=asks,proto3" json:"asks,omitempty"`
-	Bids              []*DiffLevel           `protobuf:"bytes,5,rep,name=bids,proto3" json:"bids,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *BookDiff) Reset() {
-	*x = BookDiff{}
-	mi := &file_ethereal_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BookDiff) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BookDiff) ProtoMessage() {}
-
-func (x *BookDiff) ProtoReflect() protoreflect.Message {
-	mi := &file_ethereal_proto_msgTypes[1]
+func (x *Envelope) GetTs() int64 {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
+		return x.Ts
+	}
+	return 0
+}
+
+func (x *Envelope) GetPayload() isEnvelope_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *Envelope) GetDiff() *BookDiff {
+	if x != nil {
+		if x, ok := x.Payload.(*Envelope_Diff); ok {
+			return x.Diff
 		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BookDiff.ProtoReflect.Descriptor instead.
-func (*BookDiff) Descriptor() ([]byte, []int) {
-	return file_ethereal_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *BookDiff) GetProductId() string {
-	if x != nil {
-		return x.ProductId
-	}
-	return ""
-}
-
-func (x *BookDiff) GetTimestamp() int64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *BookDiff) GetPreviousTimestamp() int64 {
-	if x != nil {
-		return x.PreviousTimestamp
-	}
-	return 0
-}
-
-func (x *BookDiff) GetAsks() []*DiffLevel {
-	if x != nil {
-		return x.Asks
 	}
 	return nil
 }
 
-func (x *BookDiff) GetBids() []*DiffLevel {
-	if x != nil {
-		return x.Bids
-	}
-	return nil
+type isEnvelope_Payload interface {
+	isEnvelope_Payload()
 }
+
+type Envelope_Diff struct {
+	Diff *BookDiff `protobuf:"bytes,9,opt,name=diff,proto3,oneof"`
+}
+
+func (*Envelope_Diff) isEnvelope_Payload() {}
 
 var File_ethereal_proto protoreflect.FileDescriptor
 
 const file_ethereal_proto_rawDesc = "" +
 	"\n" +
-	"\x0eethereal.proto\x12\bethereal\"5\n" +
-	"\tDiffLevel\x12\x14\n" +
-	"\x05price\x18\x01 \x01(\tR\x05price\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\tR\x04size\"\xc8\x01\n" +
-	"\bBookDiff\x12\x1d\n" +
+	"\x0eethereal.proto\x12\x0frim.v1.ethereal\x1a\n" +
+	"book.proto\"\xa6\x01\n" +
+	"\bEnvelope\x125\n" +
+	"\bexchange\x18\x01 \x01(\x0e2\x19.rim.v1.ethereal.ExchTypeR\bexchange\x12\x1a\n" +
+	"\bsequence\x18\x02 \x01(\x04R\bsequence\x12\x0e\n" +
+	"\x02ts\x18\x03 \x01(\x03R\x02ts\x12,\n" +
+	"\x04diff\x18\t \x01(\v2\x16.exch.v1.book.BookDiffH\x00R\x04diffB\t\n" +
+	"\apayload*;\n" +
+	"\bExchType\x12\x10\n" +
+	"\fTYPE_UNKNOWN\x10\x00\x12\r\n" +
+	"\tTYPE_SPOT\x10\x01\x12\x0e\n" +
 	"\n" +
-	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
-	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12'\n" +
-	"\x04asks\x18\x04 \x03(\v2\x13.ethereal.DiffLevelR\x04asks\x12'\n" +
-	"\x04bids\x18\x05 \x03(\v2\x13.ethereal.DiffLevelR\x04bidsB0Z.github.com/qiwi1272/ethereal-go/_pb;etherealpbb\x06proto3"
+	"TYPE_PERPS\x10\x02B\x1cZ\x1aethereal-go/_pb;etherealpbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once
@@ -177,14 +190,16 @@ func file_ethereal_proto_rawDescGZIP() []byte {
 	return file_ethereal_proto_rawDescData
 }
 
-var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_ethereal_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_ethereal_proto_goTypes = []any{
-	(*DiffLevel)(nil), // 0: ethereal.DiffLevel
-	(*BookDiff)(nil),  // 1: ethereal.BookDiff
+	(ExchType)(0),    // 0: rim.v1.ethereal.ExchType
+	(*Envelope)(nil), // 1: rim.v1.ethereal.Envelope
+	(*BookDiff)(nil), // 2: exch.v1.book.BookDiff
 }
 var file_ethereal_proto_depIdxs = []int32{
-	0, // 0: ethereal.BookDiff.asks:type_name -> ethereal.DiffLevel
-	0, // 1: ethereal.BookDiff.bids:type_name -> ethereal.DiffLevel
+	0, // 0: rim.v1.ethereal.Envelope.exchange:type_name -> rim.v1.ethereal.ExchType
+	2, // 1: rim.v1.ethereal.Envelope.diff:type_name -> exch.v1.book.BookDiff
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -197,18 +212,23 @@ func file_ethereal_proto_init() {
 	if File_ethereal_proto != nil {
 		return
 	}
+	file_book_proto_init()
+	file_ethereal_proto_msgTypes[0].OneofWrappers = []any{
+		(*Envelope_Diff)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ethereal_proto_rawDesc), len(file_ethereal_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_ethereal_proto_goTypes,
 		DependencyIndexes: file_ethereal_proto_depIdxs,
+		EnumInfos:         file_ethereal_proto_enumTypes,
 		MessageInfos:      file_ethereal_proto_msgTypes,
 	}.Build()
 	File_ethereal_proto = out.File

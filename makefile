@@ -23,6 +23,3 @@ deps:
 	go get -u ./...
 
 all: fmt tidy vet test build
-
-proto:
-	protoc -I=_protos/ --go_out=../ ethereal.proto

@@ -153,7 +153,7 @@ var File_ethereal_proto protoreflect.FileDescriptor
 
 const file_ethereal_proto_rawDesc = "" +
 	"\n" +
-	"\x0eethereal.proto\x12\bspoke.v1\"5\n" +
+	"\x0eethereal.proto\x12\bethereal\"5\n" +
 	"\tDiffLevel\x12\x14\n" +
 	"\x05price\x18\x01 \x01(\tR\x05price\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\tR\x04size\"\xc8\x01\n" +
@@ -162,8 +162,8 @@ const file_ethereal_proto_rawDesc = "" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
 	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12'\n" +
-	"\x04asks\x18\x04 \x03(\v2\x13.spoke.v1.DiffLevelR\x04asks\x12'\n" +
-	"\x04bids\x18\x05 \x03(\v2\x13.spoke.v1.DiffLevelR\x04bidsB\x14Z\x12ethereal-go/_pb;pbb\x06proto3"
+	"\x04asks\x18\x04 \x03(\v2\x13.ethereal.DiffLevelR\x04asks\x12'\n" +
+	"\x04bids\x18\x05 \x03(\v2\x13.ethereal.DiffLevelR\x04bidsB\x14Z\x12ethereal-go/_pb;pbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once
@@ -179,12 +179,12 @@ func file_ethereal_proto_rawDescGZIP() []byte {
 
 var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_ethereal_proto_goTypes = []any{
-	(*DiffLevel)(nil), // 0: spoke.v1.DiffLevel
-	(*BookDiff)(nil),  // 1: spoke.v1.BookDiff
+	(*DiffLevel)(nil), // 0: ethereal.DiffLevel
+	(*BookDiff)(nil),  // 1: ethereal.BookDiff
 }
 var file_ethereal_proto_depIdxs = []int32{
-	0, // 0: spoke.v1.BookDiff.asks:type_name -> spoke.v1.DiffLevel
-	0, // 1: spoke.v1.BookDiff.bids:type_name -> spoke.v1.DiffLevel
+	0, // 0: ethereal.BookDiff.asks:type_name -> ethereal.DiffLevel
+	0, // 1: ethereal.BookDiff.bids:type_name -> ethereal.DiffLevel
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

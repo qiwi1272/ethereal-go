@@ -54,11 +54,11 @@ func strip0x(s string) string {
 }
 
 type Signable interface {
-	build(*EtherealClient)
+	build(*RestClient)
 	ToMessage() (abi.TypedDataMessage, error)
 }
 
-func Sign(message Signable, primaryType string, cl *EtherealClient) (string, error) {
+func Sign(message Signable, primaryType string, cl *RestClient) (string, error) {
 	msg, err := message.ToMessage()
 	if err != nil {
 		return "", err

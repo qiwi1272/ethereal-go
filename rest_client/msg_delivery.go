@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-func (o *Order) Send(ctx context.Context, client *EtherealClient) (OrderCreated, error) {
+func (o *Order) Send(ctx context.Context, client *RestClient) (OrderCreated, error) {
 	var err error
 	var created OrderCreated
 
@@ -32,7 +32,7 @@ func (o *Order) Send(ctx context.Context, client *EtherealClient) (OrderCreated,
 	return created, nil
 }
 
-func (o *CancelOrder) Send(ctx context.Context, client *EtherealClient) ([]OrderCancelled, error) {
+func (o *CancelOrder) Send(ctx context.Context, client *RestClient) ([]OrderCancelled, error) {
 	var cancelled Response[[]OrderCancelled]
 
 	o.build(client)
@@ -75,7 +75,7 @@ var intentMap = map[intent]string{
 
 func SendBatch[ResponseType BatchResponse](
 	ctx context.Context,
-	cl *EtherealClient,
+	cl *RestClient,
 	intent intent,
 	payload []Signable,
 ) ([]ResponseType, error) {

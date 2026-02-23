@@ -1,13 +1,9 @@
 # Ethereal Go Client
 
-# Ethereal Go Client
-
 Lightweight golang client for interacting with the Ethereal API.
 
 ## Features
 
-- Experimental protobuf support.
-- Order placement and cancellation for REST, Websocket, and Socket.IO
 - Experimental protobuf support.
 - Order placement and cancellation for REST, Websocket, and Socket.IO
 - EIP-712 data signing

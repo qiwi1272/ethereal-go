@@ -91,7 +91,7 @@ func (o *Order) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *Order) build(cl *EtherealClient) {
+func (o *Order) build(cl *RestClient) {
 	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 	nonce := getNonce()
@@ -124,7 +124,7 @@ func (o *CancelOrder) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *CancelOrder) build(cl *EtherealClient) {
+func (o *CancelOrder) build(cl *RestClient) {
 	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 

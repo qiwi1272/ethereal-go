@@ -1,7 +1,7 @@
 // 				02/21/26 			//
 //   	qiwi@roundinternet.money 	//
 
-package etherealpb
+package pb
 
 import (
 	"fmt"

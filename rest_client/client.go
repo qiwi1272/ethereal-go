@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,9 +16,9 @@ import (
 	"github.com/qiwi1272/ethereal-go"
 )
 
-const USER_AGENT = "ethereal-go-sdk/1.0.0"
+const USER_AGENT = "ethereal-go-sdk/1.1.0"
 
-type EtherealClient struct {
+type RestClient struct {
 	baseURL    string
 	http       *http.Client
 	Subaccount *ethereal.Subaccount
@@ -35,7 +34,7 @@ const (
 	Mainnet Environment = "https://api.ethereal.trade"
 )
 
-func NewRestClient(ctx context.Context, pk string, env Environment) (*EtherealClient, error) {
+func NewRestClient(ctx context.Context, pk string, env Environment) (*RestClient, error) {
 	transport := &http.Transport{
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   100,
@@ -46,7 +45,7 @@ func NewRestClient(ctx context.Context, pk string, env Environment) (*EtherealCl
 		ForceAttemptHTTP2:     true,
 	}
 
-	client := &EtherealClient{
+	client := &RestClient{
 		baseURL: string(env),
 		http: &http.Client{
 			Transport: transport,
@@ -56,10 +55,7 @@ func NewRestClient(ctx context.Context, pk string, env Environment) (*EtherealCl
 
 	// load pk
 	if pk == "" {
-		pk = os.Getenv("ETHEREAL_PK")
-		if pk == "" {
-			return nil, errors.New("no private key provided; ETHEREAL_PK not set in environment")
-		}
+		return nil, errors.New("no private key provided; ETHEREAL_PK not set in environment")
 	}
 
 	// parse key, set address
@@ -93,7 +89,7 @@ type SignedGenericMessage struct {
 	Signature string `json:"signature"`
 }
 
-func (e *EtherealClient) do(ctx context.Context, method, path string, body any) ([]byte, error) {
+func (e *RestClient) do(ctx context.Context, method, path string, body any) ([]byte, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -122,7 +118,7 @@ func (e *EtherealClient) do(ctx context.Context, method, path string, body any) 
 }
 
 // ---------- Setup ----------
-func (e *EtherealClient) InitDomain(ctx context.Context) (string, error) {
+func (e *RestClient) InitDomain(ctx context.Context) (string, error) {
 	// init eip 712 data from rpc
 	data, err := e.do(ctx, "GET", "/v1/rpc/config", nil)
 	if err != nil {
@@ -166,7 +162,7 @@ func (e *EtherealClient) InitDomain(ctx context.Context) (string, error) {
 	return hex.EncodeToString(domain), nil
 }
 
-func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
+func (e *RestClient) InitSubaccount(ctx context.Context) error {
 	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.Address)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
@@ -186,7 +182,7 @@ func (e *EtherealClient) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
-func (e *EtherealClient) GetPosition(ctx context.Context) ([]Position, error) {
+func (e *RestClient) GetPosition(ctx context.Context) ([]Position, error) {
 	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
@@ -200,7 +196,7 @@ func (e *EtherealClient) GetPosition(ctx context.Context) ([]Position, error) {
 	return resp.Data, nil
 }
 
-func (e *EtherealClient) GetAccountBalance(ctx context.Context) ([]AccountBalance, error) {
+func (e *RestClient) GetAccountBalance(ctx context.Context) ([]AccountBalance, error) {
 	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.Subaccount.Id)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
@@ -214,7 +210,7 @@ func (e *EtherealClient) GetAccountBalance(ctx context.Context) ([]AccountBalanc
 	return resp.Data, nil
 }
 
-func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product, error) {
+func (e *RestClient) GetProductMap(ctx context.Context) (map[string]Product, error) {
 	data, err := e.do(ctx, "GET", "/v1/product", nil)
 	if err != nil {
 		return nil, err
@@ -232,7 +228,7 @@ func (e *EtherealClient) GetProductMap(ctx context.Context) (map[string]Product,
 	return products, nil
 }
 
-func (e *EtherealClient) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
+func (e *RestClient) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
 	payload := make([]Signable, len(orders))
 	for i, order := range orders {
 		payload[i] = order

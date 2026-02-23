@@ -1,9 +1,13 @@
 # Ethereal Go Client
 
+# Ethereal Go Client
+
 Lightweight golang client for interacting with the Ethereal API.
 
 ## Features
 
+- Experimental protobuf support.
+- Order placement and cancellation for REST, Websocket, and Socket.IO
 - Experimental protobuf support.
 - Order placement and cancellation for REST, Websocket, and Socket.IO
 - EIP-712 data signing
@@ -33,10 +37,10 @@ see the [examples/](./examples/) folder in this repository.
 - Only one subaccount is currently supported; by default the first one discovered is used.
 - If you need to extend the protobus, see [proto.md](./PROTO.md)
 
-````
+```
 
 
-Status
+Client Status
 -----
 - Other methods will be added as they are supported and or needed.
 - This includes some missing rest methods, and the native websocket support.
@@ -54,6 +58,7 @@ To format the code, use the following command:
 ```bash
 make fmt
 ```
+
 ## Testing
 
 To run tests, use the following command:
@@ -85,4 +90,3 @@ To run all common tasks (formatting, tidying, vetting, testing, building), use t
 ```bash
 make all
 ```
-````

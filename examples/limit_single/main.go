@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -19,7 +20,7 @@ func main() {
 	ctx := context.Background()
 
 	// create client and fetch products
-	client, err := restClient.NewRestClient(ctx, "", restClient.Testnet)
+	client, err := restClient.NewRestClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Testnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}

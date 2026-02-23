@@ -4,7 +4,7 @@
 // 	protoc        v3.21.12
 // source: book.proto
 
-package etherealpb
+package pb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -154,17 +154,17 @@ var File_book_proto protoreflect.FileDescriptor
 const file_book_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"book.proto\x12\fexch.v1.book\"5\n" +
+	"book.proto\x12\vrim.v1.book\"5\n" +
 	"\tDiffLevel\x12\x14\n" +
 	"\x05price\x18\x01 \x01(\tR\x05price\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\tR\x04size\"\xd0\x01\n" +
+	"\x04size\x18\x02 \x01(\tR\x04size\"\xce\x01\n" +
 	"\bBookDiff\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
-	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12+\n" +
-	"\x04asks\x18\x04 \x03(\v2\x17.exch.v1.book.DiffLevelR\x04asks\x12+\n" +
-	"\x04bids\x18\x05 \x03(\v2\x17.exch.v1.book.DiffLevelR\x04bidsB\x1cZ\x1aethereal-go/_pb;etherealpbb\x06proto3"
+	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12*\n" +
+	"\x04asks\x18\x04 \x03(\v2\x16.rim.v1.book.DiffLevelR\x04asks\x12*\n" +
+	"\x04bids\x18\x05 \x03(\v2\x16.rim.v1.book.DiffLevelR\x04bidsB#Z!/roundinternetmoney.com/protos;pbb\x06proto3"
 
 var (
 	file_book_proto_rawDescOnce sync.Once
@@ -180,12 +180,12 @@ func file_book_proto_rawDescGZIP() []byte {
 
 var file_book_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_book_proto_goTypes = []any{
-	(*DiffLevel)(nil), // 0: exch.v1.book.DiffLevel
-	(*BookDiff)(nil),  // 1: exch.v1.book.BookDiff
+	(*DiffLevel)(nil), // 0: rim.v1.book.DiffLevel
+	(*BookDiff)(nil),  // 1: rim.v1.book.BookDiff
 }
 var file_book_proto_depIdxs = []int32{
-	0, // 0: exch.v1.book.BookDiff.asks:type_name -> exch.v1.book.DiffLevel
-	0, // 1: exch.v1.book.BookDiff.bids:type_name -> exch.v1.book.DiffLevel
+	0, // 0: rim.v1.book.BookDiff.asks:type_name -> rim.v1.book.DiffLevel
+	0, // 1: rim.v1.book.BookDiff.bids:type_name -> rim.v1.book.DiffLevel
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

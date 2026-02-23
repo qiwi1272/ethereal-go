@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/qiwi1272/ethereal-go"
-	etherealpb "github.com/qiwi1272/ethereal-go/_pb"
+	pb "github.com/qiwi1272/ethereal-go/_pb"
 )
 
 type SocketIOClient struct {
@@ -78,26 +78,26 @@ const prev_ts_prefix_len = len("\"previousTimestamp\":")
 const asks_prefix_len = len("\"asks\":")
 const bids_prefix_len = len(",\"bids\":")
 
-func (ws *SocketIOClient) OnBookDepth(handler func(*etherealpb.BookDiff)) {
+func (ws *SocketIOClient) OnBookDepth(handler func(*pb.BookDiff)) {
 	ws.Socket.OnEvent("BookDepth", func(bytes json.RawMessage) {
 
-		diff := &etherealpb.BookDiff{}
+		diff := &pb.BookDiff{}
 
 		var next int
 		var err error
 
 		bytes = bytes[pid_prefix_len:] // consume {"productId":
-		if next, diff.ProductId, err = etherealpb.ReadStringAt(bytes, 0); err != nil {
+		if next, diff.ProductId, err = pb.ReadStringAt(bytes, 0); err != nil {
 			panic(err)
 		}
 
 		bytes = bytes[next+ts_prefix_len:] // consume ,"timestamp":
-		if next, diff.Timestamp, err = etherealpb.ReadInt64At(bytes, 0, ','); err != nil {
+		if next, diff.Timestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
 			panic(err)
 		}
 
 		bytes = bytes[next+prev_ts_prefix_len:] // consume "previousTimestamp":
-		if next, diff.PreviousTimestamp, err = etherealpb.ReadInt64At(bytes, 0, ','); err != nil {
+		if next, diff.PreviousTimestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
 			panic(err)
 		}
 

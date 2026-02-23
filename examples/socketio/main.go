@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	etherealpb "github.com/qiwi1272/ethereal-go/_pb"
+	pb "github.com/qiwi1272/ethereal-go/_pb"
 	restClient "github.com/qiwi1272/ethereal-go/rest_client"
 	socketioClient "github.com/qiwi1272/ethereal-go/socketio_client"
 )
@@ -41,7 +41,7 @@ func main() {
 	select {}
 }
 
-func bookHandler(v *etherealpb.BookDiff) {
+func bookHandler(v *pb.BookDiff) {
 	fmt.Printf("BookDepth update: %+v\n", v.ProductId)
 	fmt.Printf("BookDepth update: %+v\n", v.Bids)
 	fmt.Printf("BookDepth update: %+v\n", v.Asks)

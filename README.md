@@ -4,7 +4,8 @@ Lightweight golang client for interacting with the Ethereal API.
 
 ## Features
 
-- Order placement and cancellation for REST, Websocket, and Socket.IO clients
+- Experimental protobuf support.
+- Order placement and cancellation for REST, Websocket, and Socket.IO
 - EIP-712 data signing
 - Batch execution support (concurrent, unordered, type-safe)
 - Automatic nonce and timestamp handling
@@ -30,9 +31,12 @@ see the [examples/](./examples/) folder in this repository.
 - If no private key is passed to the rest client, an error will be returned.
 - All signable request messages implement the `Signable` interface.
 - Only one subaccount is currently supported; by default the first one discovered is used.
+- If you need to extend the protobus, see [proto.md](./PROTO.md)
 
-```
-Client Status
+````
+
+
+Status
 -----
 - Other methods will be added as they are supported and or needed.
 - This includes some missing rest methods, and the native websocket support.
@@ -50,21 +54,6 @@ To format the code, use the following command:
 ```bash
 make fmt
 ```
-
-## Dependency Management
-
-To tidy up dependencies, use the following command:
-
-```bash
-make tidy
-```
-
-## To install dependencies, use the following command:
-
-```bash
-make deps
-```
-
 ## Testing
 
 To run tests, use the following command:
@@ -96,3 +85,4 @@ To run all common tasks (formatting, tidying, vetting, testing, building), use t
 ```bash
 make all
 ```
+````

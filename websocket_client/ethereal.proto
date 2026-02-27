@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+option go_package = "/ethereal-go/websocket_client;wssClient";
+
+package rim.v1.ethereal;
+
+import "google/protobuf/struct.proto";
+
+message L2Book {
+    string s = 1;
+    int64 t = 2;
+    int64 pt = 3;
+    string bid_amt = 4;
+    string ask_amt = 5;
+    repeated google.protobuf.ListValue a = 6;
+    repeated google.protobuf.ListValue b = 7;
+}
+
+message MarketPrice {
+    string s = 1;
+    string bid_px = 2;
+    string ask_px = 3;
+    string bid_amt = 4;
+    string ask_amt = 5;
+    string mark_px = 6;
+    string mark24h_px = 7;
+}
+
+message TradeFill {
+    string id = 1;
+    string px = 2;
+    string sz = 3;
+    uint32 sd = 4;
+    repeated string sids = 5; // [taker maker]
+}
+
+message SubaccountLiquidation {
+    string s = 1;
+    string px = 2;
+    string sz = 3;
+}
+
+message Order {
+    string id = 1;
+    string client_order_id = 2;
+    string type = 3;
+    string available_quantity = 4;
+    string quantity = 5;
+    string side = 6;
+    string product_id = 7;
+    string subaccount_id = 8;
+    string status = 9;
+    bool reduce_only = 10;
+    bool close = 11;
+    int64 updated_at = 12;
+    int64 created_at = 13;
+    string sender = 14;
+    string price = 15;
+    string filled = 16;
+    string stop_price = 17;
+    int64 stop_type = 18;
+    int64 stop_price_type  = 19;
+    string time_in_force = 20;
+    int64 expires_at = 21;
+    bool post_only = 22;
+    int32 group_contingency_type = 23;
+    string group_id = 24;
+    string triggered = 25;
+
+}
+message OrderFill {
+    string id = 1;
+    string order_id = 2;
+    string client_order_id = 3;
+    string price = 4;
+    string filled = 5;
+    string type = 6;
+    string side = 7;
+    bool reduce_only = 8;
+    string fee_usd = 9;
+    bool is_maker = 10;
+    string product_id = 11;
+    string subaccount_id = 12;
+    int64 created_at = 13;
+}
+
+message Transfer {
+    string id = 1;
+    string sid = 2;
+    string t_name = 3;
+    string t_addr = 4;
+    string typ = 5;
+    string st = 6;
+    string amt = 7;
+    string fee = 8;
+    optional string ini_bk = 9;
+    optional string fin_bk = 10;
+    optional string ini_tx = 11;
+    optional string fin_tx = 12;
+    optional string lz_addr = 13;
+    optional string lz_eid = 14;
+}
+
+message EventMessage {
+    string e = 1;
+    int64 t = 2;
+    oneof data {
+        MarketPrice market_price = 6;
+        L2Book book_diff = 7;
+        TradeFill trade_fill = 8;
+        SubaccountLiquidation liq = 9;
+        Order order_update = 10;
+        OrderFill order_fill = 11;
+        Transfer transfer = 12;
+    };  
+}

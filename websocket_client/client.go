@@ -12,24 +12,6 @@ import (
 
 const baseURL string = "wss://ws2.etherealtest.net/v1/stream"
 
-type BookHandler = func(*L2Book)
-type PriceHandler = func(*MarketPrice)
-
-type Client struct {
-	Con *websocket.Conn
-	bh  BookHandler
-	ph  PriceHandler
-}
-
-func NewClient(ctx context.Context) *Client {
-	c, _, err := websocket.Dial(ctx, baseURL, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &Client{Con: c}
-}
-
 type Intent string
 
 const (
@@ -54,6 +36,49 @@ type SubaccountEvent struct {
 type SubIntent[T eventData] struct {
 	I Intent    `json:"event"`
 	D eventData `json:"data"`
+}
+
+type EventType int
+
+const (
+	EventUnknown EventType = iota
+	EventL2Book
+	EventMarketPrice
+	EventTradeFill
+	EventSubaccountLiquidation
+	EventOrderUpdate
+	EventOrderFill
+	EventTokenTransfer
+)
+
+var eventTypeMap = map[string]EventType{
+	"L2Book":                EventL2Book,
+	"MarketPrice":           EventMarketPrice,
+	"TradeFill":             EventTradeFill,
+	"SubaccountLiquidation": EventSubaccountLiquidation,
+	"OrderUpdate":           EventOrderUpdate,
+	"OrderFill":             EventOrderFill,
+	"TokenTransfer":         EventTokenTransfer,
+}
+
+type Client struct {
+	Con                *websocket.Conn
+	bookHandler        func(*L2Book)
+	priceHandler       func(*MarketPrice)
+	tradeFillHandler   func(*TradeFill)
+	liquidationHandler func(*SubaccountLiquidation)
+	orderUpdateHandler func(*Order)
+	orderFillHandler   func(*OrderFill)
+	transferHandler    func(*Transfer)
+}
+
+func NewClient(ctx context.Context) *Client {
+	c, _, err := websocket.Dial(ctx, baseURL, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &Client{Con: c}
 }
 
 func marshalSubscribe[T eventData](data T) (b []byte, err error) {
@@ -224,12 +249,32 @@ func (c *Client) UnsubscribeTokenTransfer(ctx context.Context, subaccountUuid st
 	return c.req(ctx, b)
 }
 
-func (c *Client) OnBook(callback BookHandler) {
-	c.bh = callback
+func (c *Client) OnBook(callback func(*L2Book)) {
+	c.bookHandler = callback
 }
 
-func (c *Client) OnPrice(callback PriceHandler) {
-	c.ph = callback
+func (c *Client) OnPrice(callback func(*MarketPrice)) {
+	c.priceHandler = callback
+}
+
+func (c *Client) OnTradeFill(callback func(*TradeFill)) {
+	c.tradeFillHandler = callback
+}
+
+func (c *Client) OnLiquidation(callback func(*SubaccountLiquidation)) {
+	c.liquidationHandler = callback
+}
+
+func (c *Client) OnOrderUpdate(callback func(*Order)) {
+	c.orderUpdateHandler = callback
+}
+
+func (c *Client) OnOrderFill(callback func(*OrderFill)) {
+	c.orderFillHandler = callback
+}
+
+func (c *Client) OnTransfer(callback func(*Transfer)) {
+	c.transferHandler = callback
 }
 
 type wssMsg struct {
@@ -261,22 +306,68 @@ func (c *Client) Listen(parent context.Context) error {
 			return err
 		}
 
-		switch msg.Event {
-		case "L2Book":
+		var event EventType = EventUnknown
+		var ok bool
+		if event, ok = eventTypeMap[msg.Event]; !ok {
+			event = EventUnknown
+		}
+
+		switch event {
+		case EventL2Book:
 			var diff L2Book
 			if err := protojson.Unmarshal(msg.Data, &diff); err != nil {
 				cancel(err)
 				return err
 			}
-			c.bh(&diff)
+			c.bookHandler(&diff)
 
-		case "MarketPrice":
+		case EventMarketPrice:
 			var mp MarketPrice
 			if err := protojson.Unmarshal(msg.Data, &mp); err != nil {
 				cancel(err)
 				return err
 			}
-			c.ph(&mp)
+			c.priceHandler(&mp)
+
+		case EventTradeFill:
+			var tf TradeFill
+			if err := protojson.Unmarshal(msg.Data, &tf); err != nil {
+				cancel(err)
+				return err
+			}
+			c.tradeFillHandler(&tf)
+
+		case EventSubaccountLiquidation:
+			var lq SubaccountLiquidation
+			if err := protojson.Unmarshal(msg.Data, &lq); err != nil {
+				cancel(err)
+				return err
+			}
+			c.liquidationHandler(&lq)
+
+		case EventOrderUpdate:
+			var ou Order
+			if err := protojson.Unmarshal(msg.Data, &ou); err != nil {
+				cancel(err)
+				return err
+			}
+			c.orderUpdateHandler(&ou)
+
+		case EventOrderFill:
+			var of OrderFill
+			if err := protojson.Unmarshal(msg.Data, &of); err != nil {
+				cancel(err)
+				return err
+			}
+			c.orderFillHandler(&of)
+
+		case EventTokenTransfer:
+			var t Transfer
+			if err := protojson.Unmarshal(msg.Data, &t); err != nil {
+				cancel(err)
+				return err
+			}
+			c.transferHandler(&t)
 
 		default:
 			fmt.Printf("unknown event, raw: %s\n", string(data))

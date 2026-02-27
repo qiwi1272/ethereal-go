@@ -6,15 +6,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync/atomic"
 	"syscall"
 
 	"github.com/joho/godotenv"
 	restClient "github.com/qiwi1272/ethereal-go/rest_client"
 	wssClient "github.com/qiwi1272/ethereal-go/websocket_client"
 )
-
-var seq atomic.Uint32
 
 func main() {
 	err := godotenv.Load()
@@ -29,8 +26,6 @@ func main() {
 		panic(err)
 	}
 	sid := rest.Subaccount.Id
-
-	log.Println(sid)
 
 	ws := wssClient.NewClient(ctx)
 	defer ws.Close()
@@ -58,25 +53,25 @@ func main() {
 	}
 
 	ws.OnBook(func(diff *wssClient.L2Book) {
-		fmt.Printf("called back %v\n", diff)
+		fmt.Printf("called back L2Book: %v\n", diff)
 	})
 	ws.OnPrice(func(mp *wssClient.MarketPrice) {
-		fmt.Printf("called back %v\n", mp)
+		fmt.Printf("called back MarketPrice: %v\n", mp)
 	})
 	ws.OnLiquidation(func(sl *wssClient.SubaccountLiquidation) {
-		fmt.Printf("called back %v\n", sl)
+		fmt.Printf("called back SubaccountLiquidation: %v\n", sl)
 	})
 	ws.OnOrderFill(func(of *wssClient.OrderFillEvent) {
-		fmt.Printf("called back %v\n", of)
+		fmt.Printf("called back OrderFillEvent: %v\n", of)
 	})
 	ws.OnOrderUpdate(func(o *wssClient.OrderUpdateEvent) {
-		fmt.Printf("called back %v\n", o)
+		fmt.Printf("called back OrderUpdateEvent: %v\n", o)
 	})
 	ws.OnTradeFill(func(tf *wssClient.TradeFillEvent) {
-		fmt.Printf("seq %v\n", seq.Add(1))
+		fmt.Printf("called back TradeFillEvent: %v\n", tf)
 	})
 	ws.OnTransfer(func(t *wssClient.Transfer) {
-		fmt.Printf("called back %v\n", t)
+		fmt.Printf("called back Transfer: %v\n", t)
 	})
 
 	errCh := make(chan error, 1)

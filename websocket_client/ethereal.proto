@@ -115,12 +115,13 @@ message EventMessage {
     oneof data {
         MarketPrice market_price = 6;
         L2Book book_diff = 7;
-        SubaccountLiquidation liq = 9;
         Transfer transfer = 12;
     };  
 }
 
-// array events //
+// proto array events //
+// EventMessage "oneof" field is not compatable with these messages 
+// protoreflections or custom decoding would be needed to keep the client intact
 message OrderUpdateEvent {
     string e = 1;
     int64 t = 2;
@@ -137,4 +138,10 @@ message TradeFillEvent {
     string e = 1;
     int64 t = 2;
     TradeFill data = 3;  
+}
+
+message SubaccountLiquidationEvent {
+    string e = 1;
+    int64 t = 2;
+    SubaccountLiquidation data = 3;  
 }

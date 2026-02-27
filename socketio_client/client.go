@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/qiwi1272/ethereal-go"
-	pb "github.com/qiwi1272/ethereal-go/_pb"
 )
 
 type Client struct {
@@ -78,26 +77,26 @@ const prev_ts_prefix_len = len("\"previousTimestamp\":")
 const asks_prefix_len = len("\"asks\":")
 const bids_prefix_len = len(",\"bids\":")
 
-func (ws *Client) OnBookDepth(handler func(*pb.BookDiff)) {
+func (ws *Client) OnBookDepth(handler func(*BookDiff)) {
 	ws.Socket.OnEvent("BookDepth", func(bytes json.RawMessage) {
 
-		diff := &pb.BookDiff{}
+		diff := &BookDiff{}
 
 		var next int
 		var err error
 
 		bytes = bytes[pid_prefix_len:] // consume {"productId":
-		if next, diff.ProductId, err = pb.ReadStringAt(bytes, 0); err != nil {
+		if next, diff.ProductId, err = ReadStringAt(bytes, 0); err != nil {
 			panic(err)
 		}
 
 		bytes = bytes[next+ts_prefix_len:] // consume ,"timestamp":
-		if next, diff.Timestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
+		if next, diff.Timestamp, err = ReadInt64At(bytes, 0, ','); err != nil {
 			panic(err)
 		}
 
 		bytes = bytes[next+prev_ts_prefix_len:] // consume "previousTimestamp":
-		if next, diff.PreviousTimestamp, err = pb.ReadInt64At(bytes, 0, ','); err != nil {
+		if next, diff.PreviousTimestamp, err = ReadInt64At(bytes, 0, ','); err != nil {
 			panic(err)
 		}
 

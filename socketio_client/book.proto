@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "ethereal-go/_pb/;pb";
+option go_package = "/ethereal-go/rest_client;pb";
 
-package ethereal.v1.book;
+package rim.v1.book;
 
 message DiffLevel {
   string price = 1;

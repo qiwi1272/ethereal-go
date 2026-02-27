@@ -31,7 +31,7 @@ see the [examples/](./examples/) folder in this repository.
 - If no private key is passed to the rest client, an error will be returned.
 - All signable request messages implement the `Signable` interface.
 - Only one subaccount is currently supported; by default the first one discovered is used.
-- If you need to extend the protobus, see [proto.md](./PROTO.md)
+- If you need to extend the protobuf spec, see [proto.md](./PROTO.md)
 
 ```
 

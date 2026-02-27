@@ -1,7 +1,7 @@
 // 				02/21/26 			//
 //   	qiwi@roundinternet.money 	//
 
-package pb
+package socketioClient
 
 import (
 	"fmt"

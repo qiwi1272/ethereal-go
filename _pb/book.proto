@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "ethereal-go/_pb/;pb";
+
+package ethereal.v1.book;
+
+message DiffLevel {
+  string price = 1;
+  string size = 2;
+}
+
+message BookDiff {
+  string product_id = 1;
+  int64 timestamp = 2;
+  int64 previous_timestamp = 3;
+  repeated DiffLevel asks = 4;
+  repeated DiffLevel bids = 5;
+}

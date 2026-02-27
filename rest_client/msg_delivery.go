@@ -1,4 +1,4 @@
-package rest_client
+package restClient
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-func (o *Order) Send(ctx context.Context, client *RestClient) (OrderCreated, error) {
+func (o *Order) Send(ctx context.Context, client *Client) (OrderCreated, error) {
 	var err error
 	var created OrderCreated
 
@@ -32,7 +32,7 @@ func (o *Order) Send(ctx context.Context, client *RestClient) (OrderCreated, err
 	return created, nil
 }
 
-func (o *CancelOrder) Send(ctx context.Context, client *RestClient) ([]OrderCancelled, error) {
+func (o *CancelOrder) Send(ctx context.Context, client *Client) ([]OrderCancelled, error) {
 	var cancelled Response[[]OrderCancelled]
 
 	o.build(client)
@@ -75,7 +75,7 @@ var intentMap = map[intent]string{
 
 func SendBatch[ResponseType BatchResponse](
 	ctx context.Context,
-	cl *RestClient,
+	cl *Client,
 	intent intent,
 	payload []Signable,
 ) ([]ResponseType, error) {
@@ -84,7 +84,7 @@ func SendBatch[ResponseType BatchResponse](
 	var wg sync.WaitGroup
 
 	wg.Add(batchSize)
-	recipts := make([]ResponseType, batchSize)
+	receipts := make([]ResponseType, batchSize)
 	errCh := make(chan error, batchSize)
 
 	for i, order := range payload {
@@ -104,7 +104,7 @@ func SendBatch[ResponseType BatchResponse](
 				errCh <- err
 				return
 			}
-			if err := json.Unmarshal(resp, &recipts[i]); err != nil {
+			if err := json.Unmarshal(resp, &receipts[i]); err != nil {
 				errCh <- err
 				return
 			}
@@ -120,5 +120,5 @@ func SendBatch[ResponseType BatchResponse](
 		}
 	}
 
-	return recipts, nil
+	return receipts, nil
 }

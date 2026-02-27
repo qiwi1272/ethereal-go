@@ -1,4 +1,4 @@
-package rest_client
+package restClient
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 
 const USER_AGENT = "ethereal-go-sdk/1.1.0"
 
-type RestClient struct {
+type Client struct {
 	baseURL    string
 	http       *http.Client
 	Subaccount *ethereal.Subaccount
@@ -34,7 +34,7 @@ const (
 	Mainnet Environment = "https://api.ethereal.trade"
 )
 
-func NewRestClient(ctx context.Context, pk string, env Environment) (*RestClient, error) {
+func NewClient(ctx context.Context, pk string, env Environment) (*Client, error) {
 	transport := &http.Transport{
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   100,
@@ -45,7 +45,7 @@ func NewRestClient(ctx context.Context, pk string, env Environment) (*RestClient
 		ForceAttemptHTTP2:     true,
 	}
 
-	client := &RestClient{
+	client := &Client{
 		baseURL: string(env),
 		http: &http.Client{
 			Transport: transport,
@@ -68,7 +68,7 @@ func NewRestClient(ctx context.Context, pk string, env Environment) (*RestClient
 	// ethereal env setup
 	_, err = client.InitDomain(ctx)
 	if err != nil {
-		return nil, errors.New("unable to compute domain hash")
+		return nil, errors.Join(errors.New("unable to compute domain hash: "), err)
 	}
 
 	if err := client.InitSubaccount(ctx); err != nil {
@@ -89,7 +89,7 @@ type SignedGenericMessage struct {
 	Signature string `json:"signature"`
 }
 
-func (e *RestClient) do(ctx context.Context, method, path string, body any) ([]byte, error) {
+func (e *Client) do(ctx context.Context, method, path string, body any) ([]byte, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (e *RestClient) do(ctx context.Context, method, path string, body any) ([]b
 }
 
 // ---------- Setup ----------
-func (e *RestClient) InitDomain(ctx context.Context) (string, error) {
+func (e *Client) InitDomain(ctx context.Context) (string, error) {
 	// init eip 712 data from rpc
 	data, err := e.do(ctx, "GET", "/v1/rpc/config", nil)
 	if err != nil {
@@ -162,7 +162,7 @@ func (e *RestClient) InitDomain(ctx context.Context) (string, error) {
 	return hex.EncodeToString(domain), nil
 }
 
-func (e *RestClient) InitSubaccount(ctx context.Context) error {
+func (e *Client) InitSubaccount(ctx context.Context) error {
 	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.Address)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
@@ -182,7 +182,7 @@ func (e *RestClient) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
-func (e *RestClient) GetPosition(ctx context.Context) ([]Position, error) {
+func (e *Client) GetPosition(ctx context.Context) ([]Position, error) {
 	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
@@ -196,13 +196,13 @@ func (e *RestClient) GetPosition(ctx context.Context) ([]Position, error) {
 	return resp.Data, nil
 }
 
-func (e *RestClient) GetAccountBalance(ctx context.Context) ([]AccountBalance, error) {
+func (e *Client) GetAccountBalance(ctx context.Context) ([]*AccountBalance, error) {
 	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.Subaccount.Id)
 	data, err := e.do(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-	var resp Response[[]AccountBalance]
+	var resp Response[[]*AccountBalance]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (e *RestClient) GetAccountBalance(ctx context.Context) ([]AccountBalance, e
 	return resp.Data, nil
 }
 
-func (e *RestClient) GetProductMap(ctx context.Context) (map[string]Product, error) {
+func (e *Client) GetProductMap(ctx context.Context) (map[string]Product, error) {
 	data, err := e.do(ctx, "GET", "/v1/product", nil)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (e *RestClient) GetProductMap(ctx context.Context) (map[string]Product, err
 	return products, nil
 }
 
-func (e *RestClient) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
+func (e *Client) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
 	payload := make([]Signable, len(orders))
 	for i, order := range orders {
 		payload[i] = order

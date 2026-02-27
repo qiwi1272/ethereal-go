@@ -20,7 +20,7 @@ func main() {
 	ctx := context.Background()
 
 	// create client and fetch products
-	client, err := restClient.NewRestClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
+	client, err := restClient.NewClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}

@@ -22,5 +22,7 @@ build:
 deps:
 	go get -u ./...
 
-all: fmt tidy vet test build
+proto:
+	protoc -I=_pb/ --go_out=../ book.proto
 
+all: fmt tidy vet test build

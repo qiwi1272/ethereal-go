@@ -150,7 +150,7 @@ func TestOrderSigning(t *testing.T) {
 	order := getTestOrder()
 	cxt := context.Background()
 	pk := "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a" // private key for 0xdeadbeef...
-	client, err := restClient.NewRestClient(cxt, pk, restClient.Testnet)
+	client, err := restClient.NewClient(cxt, pk, restClient.Testnet)
 
 	fmt.Println("Expected Signer address: ", client.Address)
 

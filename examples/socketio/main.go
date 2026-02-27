@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
+	pb "github.com/qiwi1272/ethereal-go/_pb"
 	restClient "github.com/qiwi1272/ethereal-go/rest_client"
 	socketioClient "github.com/qiwi1272/ethereal-go/socketio_client"
 )
@@ -18,7 +20,7 @@ func main() {
 	}
 	ctx := context.Background()
 	// create client and fetch products
-	rest, err := restClient.NewRestClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
+	rest, err := restClient.NewClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -29,33 +31,19 @@ func main() {
 
 	eth_perp := products["ETHUSD"]
 
-	ws := socketioClient.NewSocketIOClient()
-
-	ws.SubscribeToBook(eth_perp.ID)
-	ws.SubscribeToPrice(eth_perp.ID)
-
-	ws.SubscribeToFill(rest.Subaccount)
-	ws.SubscribeToOrder(rest.Subaccount)
+	ws := socketioClient.NewClient()
 
 	ws.OnBookDepth(bookHandler)
-	ws.OnPrice(priceHandler)
 
-	ws.OnFill(fillHandler)
-	ws.OnOrder(orderHandler)
+	time.Sleep(3 * time.Second)
+
+	ws.SubscribeToBook(eth_perp.ID)
 
 	select {}
 }
 
-func bookHandler(v socketioClient.BookDepthStream) {
-	fmt.Printf("BookDepth update: %+v\n", v)
-}
-
-func priceHandler(v socketioClient.MarketPriceStream) {
-	fmt.Printf("Price update: %+v\n", v)
-}
-func fillHandler(v socketioClient.OrderFillStream) {
-	fmt.Printf("Fill update: %+v\n", v)
-}
-func orderHandler(v socketioClient.OrderStream) {
-	fmt.Printf("Order update: %+v\n", v)
+func bookHandler(v *pb.BookDiff) {
+	fmt.Printf("BookDepth update: %+v\n", v.ProductId)
+	fmt.Printf("BookDepth update: %+v\n", v.Bids)
+	fmt.Printf("BookDepth update: %+v\n", v.Asks)
 }

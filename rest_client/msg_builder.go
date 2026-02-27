@@ -1,4 +1,4 @@
-package rest_client
+package restClient
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ func (o *Order) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *Order) build(cl *RestClient) {
+func (o *Order) build(cl *Client) {
 	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 	nonce := getNonce()
@@ -124,7 +124,7 @@ func (o *CancelOrder) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *CancelOrder) build(cl *RestClient) {
+func (o *CancelOrder) build(cl *Client) {
 	o.Sender = cl.Address
 	o.Subaccount = cl.Subaccount.Name
 

@@ -6,6 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/joho/godotenv v1.5.1
 	github.com/karagenc/socket.io-go v0.1.0
+	google.golang.org/protobuf v1.36.11
 	nhooyr.io/websocket v1.8.11
 )
 
@@ -22,7 +23,6 @@ require (
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
@@ -45,5 +45,4 @@ require (
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 )

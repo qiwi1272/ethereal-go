@@ -20,7 +20,7 @@ func main() {
 	}
 	ctx := context.Background()
 	// create client and fetch products
-	rest, err := restClient.NewRestClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
+	rest, err := restClient.NewClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -31,7 +31,7 @@ func main() {
 
 	eth_perp := products["ETHUSD"]
 
-	ws := socketioClient.NewSocketIOClient()
+	ws := socketioClient.NewClient()
 
 	ws.OnBookDepth(bookHandler)
 

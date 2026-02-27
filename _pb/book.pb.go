@@ -164,7 +164,7 @@ const file_book_proto_rawDesc = "" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12-\n" +
 	"\x12previous_timestamp\x18\x03 \x01(\x03R\x11previousTimestamp\x12*\n" +
 	"\x04asks\x18\x04 \x03(\v2\x16.rim.v1.book.DiffLevelR\x04asks\x12*\n" +
-	"\x04bids\x18\x05 \x03(\v2\x16.rim.v1.book.DiffLevelR\x04bidsB#Z!/roundinternetmoney.com/protos;pbb\x06proto3"
+	"\x04bids\x18\x05 \x03(\v2\x16.rim.v1.book.DiffLevelR\x04bidsB\x15Z\x13/ethereal-go/_pb;pbb\x06proto3"
 
 var (
 	file_book_proto_rawDescOnce sync.Once

@@ -1,4 +1,4 @@
-package socketio_client
+package socketioClient
 
 import (
 	"encoding/json"
@@ -13,13 +13,13 @@ import (
 	pb "github.com/qiwi1272/ethereal-go/_pb"
 )
 
-type SocketIOClient struct {
+type Client struct {
 	manager *sio.Manager
 	Socket  sio.ClientSocket
 	pm      *protojson.UnmarshalOptions
 }
 
-func NewSocketIOClient() *SocketIOClient {
+func NewClient() *Client {
 	baseURL := "wss://ws.ethereal.trade/socket.io/"
 	retryDelay := time.Minute
 	config := &sio.ManagerConfig{
@@ -33,14 +33,14 @@ func NewSocketIOClient() *SocketIOClient {
 	manager := sio.NewManager(baseURL, config)
 	socket := manager.Socket("/v1/stream", nil)
 
-	wsClient := &SocketIOClient{
+	wsClient := &Client{
 		manager: manager,
 		Socket:  socket,
 		pm:      &protojson.UnmarshalOptions{DiscardUnknown: true},
 	}
 
 	// native events + open connection
-	go func(ws *SocketIOClient) {
+	go func(ws *Client) {
 		ws.Socket.OnConnect(func() {
 			fmt.Println("connected via socket to ethereal")
 		})
@@ -56,7 +56,7 @@ func NewSocketIOClient() *SocketIOClient {
 		ws.Socket.Connect()
 	}(wsClient)
 
-	return &SocketIOClient{
+	return &Client{
 		manager: manager,
 		Socket:  socket,
 	}
@@ -64,7 +64,7 @@ func NewSocketIOClient() *SocketIOClient {
 
 // avoid writing our own stream parser and use rawMessage
 
-func (ws *SocketIOClient) SubscribeToBook(productId string) {
+func (ws *Client) SubscribeToBook(productId string) {
 	req := map[string]any{
 		"type":      "BookDepth",
 		"productId": productId,
@@ -78,7 +78,7 @@ const prev_ts_prefix_len = len("\"previousTimestamp\":")
 const asks_prefix_len = len("\"asks\":")
 const bids_prefix_len = len(",\"bids\":")
 
-func (ws *SocketIOClient) OnBookDepth(handler func(*pb.BookDiff)) {
+func (ws *Client) OnBookDepth(handler func(*pb.BookDiff)) {
 	ws.Socket.OnEvent("BookDepth", func(bytes json.RawMessage) {
 
 		diff := &pb.BookDiff{}
@@ -115,7 +115,7 @@ func (ws *SocketIOClient) OnBookDepth(handler func(*pb.BookDiff)) {
 	})
 }
 
-func (ws *SocketIOClient) SubscribeToPrice(productId string) {
+func (ws *Client) SubscribeToPrice(productId string) {
 	req := map[string]any{
 		"type":      "MarketPrice",
 		"productId": productId,
@@ -123,11 +123,11 @@ func (ws *SocketIOClient) SubscribeToPrice(productId string) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *SocketIOClient) OnPrice(handler func(MarketPriceStream)) {
+func (ws *Client) OnPrice(handler func(MarketPriceStream)) {
 	ws.Socket.OnEvent("MarketPrice", handler)
 }
 
-func (ws *SocketIOClient) SubscribeToFill(s *ethereal.Subaccount) {
+func (ws *Client) SubscribeToFill(s *ethereal.Subaccount) {
 	req := map[string]any{
 		"type":         "OrderFill",
 		"subaccountId": s.Id,
@@ -135,11 +135,11 @@ func (ws *SocketIOClient) SubscribeToFill(s *ethereal.Subaccount) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *SocketIOClient) OnFill(handler func(OrderFillStream)) {
+func (ws *Client) OnFill(handler func(OrderFillStream)) {
 	ws.Socket.OnEvent("OrderFill", handler)
 }
 
-func (ws *SocketIOClient) SubscribeToOrder(s *ethereal.Subaccount) {
+func (ws *Client) SubscribeToOrder(s *ethereal.Subaccount) {
 	req := map[string]any{
 		"type":      "OrderUpdate",
 		"productId": s.Id,
@@ -147,10 +147,10 @@ func (ws *SocketIOClient) SubscribeToOrder(s *ethereal.Subaccount) {
 	ws.Socket.Emit("subscribe", req)
 }
 
-func (ws *SocketIOClient) OnOrder(handler func(OrderStream)) {
+func (ws *Client) OnOrder(handler func(OrderStream)) {
 	ws.Socket.OnEvent("OrderUpdate", handler)
 }
 
-func (ws *SocketIOClient) OnDisconnect(handler func(sio.Reason)) {
+func (ws *Client) OnDisconnect(handler func(sio.Reason)) {
 	ws.Socket.OnDisconnect(handler)
 }

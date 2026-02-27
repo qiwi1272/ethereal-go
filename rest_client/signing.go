@@ -1,4 +1,4 @@
-package rest_client
+package restClient
 
 import (
 	"encoding/hex"
@@ -54,11 +54,11 @@ func strip0x(s string) string {
 }
 
 type Signable interface {
-	build(*RestClient)
+	build(*Client)
 	ToMessage() (abi.TypedDataMessage, error)
 }
 
-func Sign(message Signable, primaryType string, cl *RestClient) (string, error) {
+func Sign(message Signable, primaryType string, cl *Client) (string, error) {
 	msg, err := message.ToMessage()
 	if err != nil {
 		return "", err

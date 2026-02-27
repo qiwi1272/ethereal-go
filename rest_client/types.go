@@ -1,4 +1,4 @@
-package rest_client
+package restClient
 
 import "github.com/qiwi1272/ethereal-go"
 

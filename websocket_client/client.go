@@ -64,13 +64,13 @@ var eventTypeMap = map[string]EventType{
 
 type Client struct {
 	Con                *websocket.Conn
-	bookHandler        func(*L2Book)
-	priceHandler       func(*MarketPrice)
+	bookHandler        func(*L2Book)      // non-array
+	priceHandler       func(*MarketPrice) // non-array
 	tradeFillHandler   func(*TradeFillEvent)
-	liquidationHandler func(*SubaccountLiquidation)
+	liquidationHandler func(*SubaccountLiquidationEvent)
 	orderUpdateHandler func(*OrderUpdateEvent)
 	orderFillHandler   func(*OrderFillEvent)
-	transferHandler    func(*Transfer)
+	transferHandler    func(*Transfer) // non-array
 }
 
 func NewClient(ctx context.Context) *Client {
@@ -283,7 +283,7 @@ func (c *Client) OnTradeFill(callback func(*TradeFillEvent)) {
 	c.tradeFillHandler = callback
 }
 
-func (c *Client) OnLiquidation(callback func(*SubaccountLiquidation)) {
+func (c *Client) OnLiquidation(callback func(*SubaccountLiquidationEvent)) {
 	c.liquidationHandler = callback
 }
 
@@ -348,11 +348,11 @@ func (c *Client) Listen(parent context.Context) error {
 			}
 
 		case EventSubaccountLiquidation:
-			var lq SubaccountLiquidation
+			var lq SubaccountLiquidationEvent
 			if err := marshalToValueCallback(msg.Data, &lq, c.liquidationHandler); err != nil {
 				fmt.Println(string(data))
 				cancel(err)
-				panic(err) // isolate the rare case
+				return err
 			}
 
 		case EventOrderFill:
@@ -381,7 +381,7 @@ func (c *Client) Listen(parent context.Context) error {
 			if err := marshalToValueCallback(data, &t, c.transferHandler); err != nil {
 				fmt.Println(string(data))
 				cancel(err)
-				panic(err) // isolate the rare case
+				return err
 			}
 
 		default:

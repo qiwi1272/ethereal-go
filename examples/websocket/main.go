@@ -66,7 +66,7 @@ func main() {
 	ws.OnPrice(func(mp *wssClient.MarketPrice) {
 		fmt.Printf("called back MarketPrice: %v\n", mp)
 	})
-	ws.OnLiquidation(func(sl *wssClient.SubaccountLiquidation) {
+	ws.OnLiquidation(func(sl *wssClient.SubaccountLiquidationEvent) {
 		fmt.Printf("called back SubaccountLiquidation: %v\n", sl)
 	})
 	ws.OnOrderFill(func(of *wssClient.OrderFillEvent) {

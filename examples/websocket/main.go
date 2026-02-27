@@ -27,18 +27,26 @@ func main() {
 	}
 	sid := rest.Subaccount.Id
 
+	var symbols map[string]restClient.Product
+	if symbols, err = rest.GetProductMap(ctx); err != nil {
+		panic(err)
+	}
+
 	ws := wssClient.NewClient(ctx)
 	defer ws.Close()
 
-	if err := ws.SubscribeMarketPrice(ctx, "BTCUSD"); err != nil {
-		log.Fatal("SubscribeMarketPrice:", err)
+	for symbolKey := range symbols {
+		if err := ws.SubscribeMarketPrice(ctx, symbolKey); err != nil {
+			log.Fatal("SubscribeMarketPrice:", err)
+		}
+		if err := ws.SubscribeBook(ctx, symbolKey); err != nil {
+			log.Fatal("SubscribeBook:", err)
+		}
+		if err := ws.SubscribeFill(ctx, symbolKey); err != nil {
+			log.Fatal("SubscribeFill:", err)
+		}
 	}
-	if err := ws.SubscribeBook(ctx, "BTCUSD"); err != nil {
-		log.Fatal("SubscribeBook:", err)
-	}
-	if err := ws.SubscribeFill(ctx, "BTCUSD"); err != nil {
-		log.Fatal("SubscribeFill:", err)
-	}
+
 	if err := ws.SubscribeLiquidation(ctx, sid); err != nil {
 		log.Fatal("SubscribeLiquidation:", err)
 	}

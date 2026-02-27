@@ -26,27 +26,35 @@ message MarketPrice {
     string mark24h_px = 7;
 }
 
-message TradeFill {
+message Fill {
     string id = 1;
     string px = 2;
     string sz = 3;
-    uint32 sd = 4;
+    int32 sd = 4; // todo: side enum. theres 2 more below. 0/1 val
     repeated string sids = 5; // [taker maker]
 }
 
-message SubaccountLiquidation {
+message TradeFill {
+    string s = 1;
+    repeated Fill fills = 5;
+}
+message LiquidationItem {
     string s = 1;
     string px = 2;
     string sz = 3;
 }
+message SubaccountLiquidation {
+    string sid = 1;
+    repeated LiquidationItem p = 2;
+}
 
-message Order {
+message OrderUpdate {
     string id = 1;
     string client_order_id = 2;
     string type = 3;
     string available_quantity = 4;
     string quantity = 5;
-    string side = 6;
+    int32 side = 6;
     string product_id = 7;
     string subaccount_id = 8;
     string status = 9;
@@ -75,7 +83,7 @@ message OrderFill {
     string price = 4;
     string filled = 5;
     string type = 6;
-    string side = 7;
+    int32 side = 7;
     bool reduce_only = 8;
     string fee_usd = 9;
     bool is_maker = 10;
@@ -107,10 +115,26 @@ message EventMessage {
     oneof data {
         MarketPrice market_price = 6;
         L2Book book_diff = 7;
-        TradeFill trade_fill = 8;
         SubaccountLiquidation liq = 9;
-        Order order_update = 10;
-        OrderFill order_fill = 11;
         Transfer transfer = 12;
     };  
+}
+
+// array events //
+message OrderUpdateEvent {
+    string e = 1;
+    int64 t = 2;
+    repeated OrderUpdate data = 3;  
+}
+
+message OrderFillEvent {
+    string e = 1;
+    int64 t = 2;
+    repeated OrderFill data = 3;  
+}
+
+message TradeFillEvent {
+    string e = 1;
+    int64 t = 2;
+    TradeFill data = 3;  
 }

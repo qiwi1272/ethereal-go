@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 )
 
@@ -65,10 +66,10 @@ type Client struct {
 	Con                *websocket.Conn
 	bookHandler        func(*L2Book)
 	priceHandler       func(*MarketPrice)
-	tradeFillHandler   func(*TradeFill)
+	tradeFillHandler   func(*TradeFillEvent)
 	liquidationHandler func(*SubaccountLiquidation)
-	orderUpdateHandler func(*Order)
-	orderFillHandler   func(*OrderFill)
+	orderUpdateHandler func(*OrderUpdateEvent)
+	orderFillHandler   func(*OrderFillEvent)
 	transferHandler    func(*Transfer)
 }
 
@@ -90,6 +91,27 @@ func marshalUnsubscribe[T eventData](data T) (b []byte, err error) {
 	req := &SubIntent[T]{I: unsub, D: data}
 	return json.Marshal(req)
 }
+
+func marshalToValueCallback[T proto.Message](data []byte, pb T, cb func(T)) (err error) {
+	if err := protojson.Unmarshal(data, pb); err != nil {
+		return err
+	}
+	cb(pb)
+	return
+}
+
+// func marshalToArrayCallback[T proto.Message](data []byte, pb EventMessageArray, parse func() T, cb func(T)) (err error) {
+// 	if err := protojson.Unmarshal(data, &pb); err != nil {
+// 		return err
+// 	}
+// 	for _, eventMsg := range pb.Data {
+// 		a := parse()
+// 		a = *eventMsg
+// 	}
+// 	parse()
+// 	cb(pb)
+// 	return
+// }
 
 func (c *Client) req(ctx context.Context, payload []byte) (err error) {
 	return c.Con.Write(ctx, websocket.MessageBinary, payload)
@@ -257,7 +279,7 @@ func (c *Client) OnPrice(callback func(*MarketPrice)) {
 	c.priceHandler = callback
 }
 
-func (c *Client) OnTradeFill(callback func(*TradeFill)) {
+func (c *Client) OnTradeFill(callback func(*TradeFillEvent)) {
 	c.tradeFillHandler = callback
 }
 
@@ -265,11 +287,11 @@ func (c *Client) OnLiquidation(callback func(*SubaccountLiquidation)) {
 	c.liquidationHandler = callback
 }
 
-func (c *Client) OnOrderUpdate(callback func(*Order)) {
+func (c *Client) OnOrderUpdate(callback func(*OrderUpdateEvent)) {
 	c.orderUpdateHandler = callback
 }
 
-func (c *Client) OnOrderFill(callback func(*OrderFill)) {
+func (c *Client) OnOrderFill(callback func(*OrderFillEvent)) {
 	c.orderFillHandler = callback
 }
 
@@ -298,8 +320,6 @@ func (c *Client) Listen(parent context.Context) error {
 			return err
 		}
 
-		fmt.Println(string(data))
-
 		var msg wssMsg
 		if err := json.Unmarshal(data, &msg); err != nil {
 			cancel(err)
@@ -315,59 +335,54 @@ func (c *Client) Listen(parent context.Context) error {
 		switch event {
 		case EventL2Book:
 			var diff L2Book
-			if err := protojson.Unmarshal(msg.Data, &diff); err != nil {
+			if err := marshalToValueCallback(msg.Data, &diff, c.bookHandler); err != nil {
 				cancel(err)
 				return err
 			}
-			c.bookHandler(&diff)
 
 		case EventMarketPrice:
 			var mp MarketPrice
-			if err := protojson.Unmarshal(msg.Data, &mp); err != nil {
+			if err := marshalToValueCallback(msg.Data, &mp, c.priceHandler); err != nil {
 				cancel(err)
 				return err
 			}
-			c.priceHandler(&mp)
-
-		case EventTradeFill:
-			var tf TradeFill
-			if err := protojson.Unmarshal(msg.Data, &tf); err != nil {
-				cancel(err)
-				return err
-			}
-			c.tradeFillHandler(&tf)
 
 		case EventSubaccountLiquidation:
 			var lq SubaccountLiquidation
-			if err := protojson.Unmarshal(msg.Data, &lq); err != nil {
+			if err := marshalToValueCallback(msg.Data, &lq, c.liquidationHandler); err != nil {
+				fmt.Println(string(data))
 				cancel(err)
-				return err
+				panic(err) // isolate the rare case
 			}
-			c.liquidationHandler(&lq)
-
-		case EventOrderUpdate:
-			var ou Order
-			if err := protojson.Unmarshal(msg.Data, &ou); err != nil {
-				cancel(err)
-				return err
-			}
-			c.orderUpdateHandler(&ou)
 
 		case EventOrderFill:
-			var of OrderFill
-			if err := protojson.Unmarshal(msg.Data, &of); err != nil {
+			var ou OrderFillEvent
+			if err := marshalToValueCallback(data, &ou, c.orderFillHandler); err != nil {
 				cancel(err)
 				return err
 			}
-			c.orderFillHandler(&of)
+
+		case EventOrderUpdate:
+			var ou OrderUpdateEvent
+			if err := marshalToValueCallback(data, &ou, c.orderUpdateHandler); err != nil {
+				cancel(err)
+				return err
+			}
+
+		case EventTradeFill:
+			var tf TradeFillEvent
+			if err := marshalToValueCallback(data, &tf, c.tradeFillHandler); err != nil {
+				cancel(err)
+				return err
+			}
 
 		case EventTokenTransfer:
 			var t Transfer
-			if err := protojson.Unmarshal(msg.Data, &t); err != nil {
+			if err := marshalToValueCallback(data, &t, c.transferHandler); err != nil {
+				fmt.Println(string(data))
 				cancel(err)
-				return err
+				panic(err) // isolate the rare case
 			}
-			c.transferHandler(&t)
 
 		default:
 			fmt.Printf("unknown event, raw: %s\n", string(data))

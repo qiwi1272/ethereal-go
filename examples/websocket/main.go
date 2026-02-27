@@ -6,12 +6,15 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/joho/godotenv"
 	restClient "github.com/qiwi1272/ethereal-go/rest_client"
 	wssClient "github.com/qiwi1272/ethereal-go/websocket_client"
 )
+
+var seq atomic.Uint32
 
 func main() {
 	err := godotenv.Load()
@@ -38,42 +41,42 @@ func main() {
 	if err := ws.SubscribeBook(ctx, "BTCUSD"); err != nil {
 		log.Fatal("SubscribeBook:", err)
 	}
-	// if err := ws.SubscribeFill(ctx, "BTCUSD"); err != nil {
-	// 	log.Fatal("SubscribeFill:", err)
-	// }
+	if err := ws.SubscribeFill(ctx, "BTCUSD"); err != nil {
+		log.Fatal("SubscribeFill:", err)
+	}
 	if err := ws.SubscribeLiquidation(ctx, sid); err != nil {
 		log.Fatal("SubscribeLiquidation:", err)
 	}
-	// if err := ws.SubscribeOrderFill(ctx, sid); err != nil {
-	// 	log.Fatal("SubscribeOrderFill:", err)
-	// }
-	// if err := ws.SubscribeOrderUpdate(ctx, sid); err != nil {
-	// 	log.Fatal("SubscribeOrderUpdate:", err)
-	// }
+	if err := ws.SubscribeOrderFill(ctx, sid); err != nil {
+		log.Fatal("SubscribeOrderFill:", err)
+	}
+	if err := ws.SubscribeOrderUpdate(ctx, sid); err != nil {
+		log.Fatal("SubscribeOrderUpdate:", err)
+	}
 	if err := ws.SubscribeTokenTransfer(ctx, sid); err != nil {
 		log.Fatal("SubscribeTokenTransfer:", err)
 	}
 
 	ws.OnBook(func(diff *wssClient.L2Book) {
-		fmt.Println(diff)
+		fmt.Printf("called back %v\n", diff)
 	})
 	ws.OnPrice(func(mp *wssClient.MarketPrice) {
-		fmt.Println(mp)
+		fmt.Printf("called back %v\n", mp)
 	})
 	ws.OnLiquidation(func(sl *wssClient.SubaccountLiquidation) {
-		fmt.Println(sl)
+		fmt.Printf("called back %v\n", sl)
 	})
-	ws.OnOrderFill(func(of *wssClient.OrderFill) {
-		fmt.Println(of)
+	ws.OnOrderFill(func(of *wssClient.OrderFillEvent) {
+		fmt.Printf("called back %v\n", of)
 	})
-	ws.OnOrderUpdate(func(o *wssClient.Order) {
-		fmt.Println(o)
+	ws.OnOrderUpdate(func(o *wssClient.OrderUpdateEvent) {
+		fmt.Printf("called back %v\n", o)
 	})
-	ws.OnTradeFill(func(tf *wssClient.TradeFill) {
-		fmt.Println(tf)
+	ws.OnTradeFill(func(tf *wssClient.TradeFillEvent) {
+		fmt.Printf("seq %v\n", seq.Add(1))
 	})
 	ws.OnTransfer(func(t *wssClient.Transfer) {
-		fmt.Println(t)
+		fmt.Printf("called back %v\n", t)
 	})
 
 	errCh := make(chan error, 1)

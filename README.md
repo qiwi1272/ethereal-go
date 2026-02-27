@@ -39,7 +39,7 @@ see the [examples/](./examples/) folder in this repository.
 Client Status
 -----
 - Other methods will be added as they are supported and or needed.
-- This includes some missing rest methods, and the native websocket support.
+- This includes some missing rest methods, and transfer/liquidation websocket streams.
 
 
 Contributing

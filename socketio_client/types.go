@@ -1,4 +1,4 @@
-package socketio_client
+package socketioClient
 
 import (
 	"encoding/json"

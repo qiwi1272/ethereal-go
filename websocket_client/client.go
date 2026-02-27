@@ -30,106 +30,198 @@ func NewClient(ctx context.Context) *Client {
 	return &Client{Con: c}
 }
 
-type SymbolData struct {
-	Type   string `json:"type"`
-	Symbol string `json:"symbol"`
+type Intent string
+
+const (
+	sub   Intent = "subscribe"
+	unsub Intent = "unsubscribe"
+)
+
+type eventData interface{}
+
+type SymbolEvent struct {
+	eventData
+	T string `json:"type"`
+	S string `json:"symbol"`
 }
 
-type SymbolMessage struct {
-	Event string     `json:"event"`
-	Data  SymbolData `json:"data"`
+type SubaccountEvent struct {
+	eventData
+	T string `json:"type"`
+	S string `json:"subaccountId"`
 }
 
-func (c *Client) SubscribeBook(ctx context.Context, symbol string) error {
-	var err error
-	var payload []byte
-
-	req := &SymbolMessage{
-		Event: "subscribe",
-		Data: SymbolData{
-			Type:   "L2Book",
-			Symbol: symbol,
-		},
-	}
-
-	if payload, err = json.Marshal(req); err != nil {
-		return err
-	}
-
-	if err = c.Con.Write(ctx, websocket.MessageBinary, payload); err != nil {
-		return err
-	}
-
-	return nil
+type SubIntent[T eventData] struct {
+	I Intent    `json:"event"`
+	D eventData `json:"data"`
 }
 
-func (c *Client) SubscribePrice(ctx context.Context, symbol string) error {
-	var err error
-	var payload []byte
-
-	req := &SymbolMessage{
-		Event: "subscribe",
-		Data: SymbolData{
-			Type:   "MarketPrice",
-			Symbol: symbol,
-		},
-	}
-
-	if payload, err = json.Marshal(req); err != nil {
-		return err
-	}
-
-	if err = c.Con.Write(ctx, websocket.MessageBinary, payload); err != nil {
-		return err
-	}
-
-	return nil
+func marshalSubscribe[T eventData](data T) (b []byte, err error) {
+	req := &SubIntent[T]{I: sub, D: data}
+	return json.Marshal(req)
 }
 
-func (c *Client) UnsubscribeBook(ctx context.Context, symbol string) error {
-	var err error
-	var payload []byte
-
-	req := &SymbolMessage{
-		Event: "unsubscribe",
-		Data: SymbolData{
-			Type:   "L2Book",
-			Symbol: symbol,
-		},
-	}
-
-	if payload, err = json.Marshal(req); err != nil {
-		return err
-	}
-
-	if err = c.Con.Write(ctx, websocket.MessageBinary, payload); err != nil {
-		return err
-	}
-
-	return nil
+func marshalUnsubscribe[T eventData](data T) (b []byte, err error) {
+	req := &SubIntent[T]{I: unsub, D: data}
+	return json.Marshal(req)
 }
 
-func (c *Client) UnsubscribePrice(ctx context.Context, symbol string) error {
-	var err error
-	var payload []byte
+func (c *Client) req(ctx context.Context, payload []byte) (err error) {
+	return c.Con.Write(ctx, websocket.MessageBinary, payload)
+}
 
-	req := &SymbolMessage{
-		Event: "unsubscribe",
-		Data: SymbolData{
-			Type:   "MarketPrice",
-			Symbol: symbol,
-		},
-	}
-
-	if payload, err = json.Marshal(req); err != nil {
+func (c *Client) SubscribeBook(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SymbolEvent{
+		T: "L2Book",
+		S: symbol,
+	}); err != nil {
 		return err
 	}
+	return c.req(ctx, b)
+}
 
-	if err = c.Con.Write(ctx, websocket.MessageBinary, payload); err != nil {
+func (c *Client) UnsubscribeBook(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SymbolEvent{
+		T: "L2Book",
+		S: symbol,
+	}); err != nil {
 		return err
 	}
+	return c.req(ctx, b)
+}
 
-	return nil
+func (c *Client) SubscribeMarketPrice(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SymbolEvent{
+		T: "MarketPrice",
+		S: symbol,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeMarketPrice(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SymbolEvent{
+		T: "MarketPrice",
+		S: symbol,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) SubscribeFill(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SymbolEvent{
+		T: "TradeFill",
+		S: symbol,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeFill(ctx context.Context, symbol string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SymbolEvent{
+		T: "TradeFill",
+		S: symbol,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) SubscribeLiquidation(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SubaccountEvent{
+		T: "SubaccountLiquidation",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeLiquidation(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SubaccountEvent{
+		T: "SubaccountLiquidation",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) SubscribeOrderUpdate(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SubaccountEvent{
+		T: "OrderUpdate",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeOrderUpdate(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SubaccountEvent{
+		T: "OrderUpdate",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) SubscribeOrderFill(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SubaccountEvent{
+		T: "OrderFill",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeOrderFill(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SubaccountEvent{
+		T: "OrderFill",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) SubscribeTokenTransfer(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalSubscribe(&SubaccountEvent{
+		T: "TokenTransfer",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
+}
+
+func (c *Client) UnsubscribeTokenTransfer(ctx context.Context, subaccountUuid string) (err error) {
+	var b []byte
+	if b, err = marshalUnsubscribe(&SubaccountEvent{
+		T: "TokenTransfer",
+		S: subaccountUuid,
+	}); err != nil {
+		return err
+	}
+	return c.req(ctx, b)
 }
 
 func (c *Client) OnBook(callback BookHandler) {

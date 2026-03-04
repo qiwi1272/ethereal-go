@@ -1,10 +1,25 @@
-package socketioClient
+package socketio
 
 import (
 	"encoding/json"
 
 	"github.com/qiwi1272/ethereal-go"
 )
+
+type Environment string
+
+const (
+	Testnet Environment = "wss://ws.etherealtest.net/socket.io/"
+	Mainnet Environment = "wss://ws.ethereal.trade/socket.io/"
+)
+
+func (e Environment) Testnet() Environment {
+	return Mainnet
+}
+
+func (e Environment) Mainnet() Environment {
+	return Mainnet
+}
 
 type BookDepthStream struct {
 	Bids              [][]json.Number `json:"bids"`

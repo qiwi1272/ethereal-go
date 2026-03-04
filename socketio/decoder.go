@@ -1,10 +1,12 @@
 // 				02/21/26 			//
 //   	qiwi@roundinternet.money 	//
 
-package socketioClient
+package socketio
 
 import (
 	"fmt"
+
+	"github.com/qiwi1272/ethereal-go/pb"
 )
 
 // reads byte values between " <--> " and interpets them as an int64
@@ -50,7 +52,7 @@ func ReadStringAt(b []byte, i int) (int, string, error) {
 
 // reads byte values between [ <--> ] and interpets them as two strings of a protobuf DiffLevel
 // returns bytes consumed as int
-func decodeDiffLevelMsg(b []byte, out *DiffLevel) (int, error) {
+func decodeDiffLevelMsg(b []byte, out *pb.DiffLevel) (int, error) {
 	var i int
 	if b[i] != '[' {
 		return 0, fmt.Errorf(`expected '"' at %d (got %q)`, i, b[i])
@@ -85,8 +87,8 @@ func decodeDiffLevelMsg(b []byte, out *DiffLevel) (int, error) {
 
 // reads []... values between [ <--> ] and interpets them as levels of a protobuf BookDiff
 // returns bytes consumed as int
-func (diff *BookDiff) DecodeDiffSideMsg(b []byte, s bool) (int, error) {
-	var buffer = make([]*DiffLevel, 0)
+func DecodeDiffSideMsg(b []byte, out *pb.BookDiff, s bool) (int, error) {
+	var buffer = make([]*pb.DiffLevel, 0)
 	var i int
 	if b[i] != '[' { // consume [
 		return 0, fmt.Errorf(`expected '"' at %d (got %q)`, i, b[i])
@@ -99,7 +101,7 @@ func (diff *BookDiff) DecodeDiffSideMsg(b []byte, s bool) (int, error) {
 			var end int
 			var err error
 
-			level := &DiffLevel{}
+			level := &pb.DiffLevel{}
 			if end, err = decodeDiffLevelMsg(b[i:], level); err != nil {
 				panic(err)
 			}
@@ -110,9 +112,9 @@ func (diff *BookDiff) DecodeDiffSideMsg(b []byte, s bool) (int, error) {
 		case ',':
 		case ']':
 			if s {
-				diff.Asks = buffer
+				out.Asks = buffer
 			} else {
-				diff.Bids = buffer
+				out.Bids = buffer
 			}
 
 			return i + 1, nil // consume ]

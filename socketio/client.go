@@ -1,6 +1,7 @@
-package socketioClient
+package socketio
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/qiwi1272/ethereal-go"
+	"github.com/qiwi1272/ethereal-go/pb"
 )
 
 type Client struct {
@@ -18,8 +20,7 @@ type Client struct {
 	pm      *protojson.UnmarshalOptions
 }
 
-func NewClient() *Client {
-	baseURL := "wss://ws.ethereal.trade/socket.io/"
+func NewClient(env Environment) *Client {
 	retryDelay := time.Minute
 	config := &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
@@ -29,7 +30,7 @@ func NewClient() *Client {
 		ReconnectionAttempts: 11,
 	}
 
-	manager := sio.NewManager(baseURL, config)
+	manager := sio.NewManager(string(env), config)
 	socket := manager.Socket("/v1/stream", nil)
 
 	wsClient := &Client{
@@ -71,16 +72,29 @@ func (ws *Client) SubscribeToBook(productId string) {
 	ws.Socket.Emit("subscribe", req)
 }
 
+func (ws *Client) Resubscribe(ctx context.Context, assets map[string]*string, _ func(*pb.BookDiff)) {
+	ws.Socket.Disconnect()
+	ws.Socket.Connect()
+	for _, uuidVal := range assets {
+		go ws.SubscribeToBook(*uuidVal)
+	}
+}
+
+func (ws *Client) OnBookDepth(handler func(BookDepthStream)) {
+	ws.Socket.OnEvent("BookDepth", handler)
+}
+
 const pid_prefix_len = len("{\"productId\":")
 const ts_prefix_len = len(",\"timestamp\":")
 const prev_ts_prefix_len = len("\"previousTimestamp\":")
 const asks_prefix_len = len("\"asks\":")
 const bids_prefix_len = len(",\"bids\":")
 
-func (ws *Client) OnBookDepth(handler func(*BookDiff)) {
+// static protobuf unpacking.
+func (ws *Client) OnBookDepthUNSAFE(handler func(*pb.BookDiff)) {
 	ws.Socket.OnEvent("BookDepth", func(bytes json.RawMessage) {
 
-		diff := &BookDiff{}
+		diff := &pb.BookDiff{}
 
 		var next int
 		var err error
@@ -101,12 +115,12 @@ func (ws *Client) OnBookDepth(handler func(*BookDiff)) {
 		}
 
 		bytes = bytes[next+asks_prefix_len:] // consume "asks":
-		if next, err = diff.DecodeDiffSideMsg(bytes, true); err != nil {
+		if next, err = DecodeDiffSideMsg(bytes, diff, true); err != nil {
 			panic(err)
 		}
 
 		bytes = bytes[next+bids_prefix_len:] // consume ,"bids":
-		if next, err = diff.DecodeDiffSideMsg(bytes, false); err != nil {
+		if next, err = DecodeDiffSideMsg(bytes, diff, false); err != nil {
 			panic(err)
 		}
 

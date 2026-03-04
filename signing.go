@@ -1,6 +1,7 @@
-package restClient
+package ethereal
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -10,7 +11,7 @@ import (
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
-var domainHash []byte // precomputed by InitDomain
+var DomainHash []byte // precomputed by InitDomain
 
 // ------- HELPERS -------
 func ParseTypeSchema(typeString string) ([]abi.Type, error) {
@@ -46,32 +47,35 @@ func Scale1e9(s string) (*big.Int, error) {
 	return n, nil
 }
 
-func strip0x(s string) string {
-	if len(s) > 1 && s[:2] == "0x" {
-		return s[2:]
-	}
-	return s
+type SignedMessage[T Signable] struct {
+	Data      T      `json:"data"`
+	Signature string `json:"signature"`
+}
+
+type Signer interface {
+	getPk() *ecdsa.PrivateKey
+	GetTypes() *abi.TypedData
 }
 
 type Signable interface {
-	build(*Client)
+	build(cl SubaccountHolder)
 	ToMessage() (abi.TypedDataMessage, error)
 }
 
-func Sign(message Signable, primaryType string, cl *Client) (string, error) {
+func Sign(message Signable, primaryType string, signer Signer) (string, error) {
 	msg, err := message.ToMessage()
 	if err != nil {
 		return "", err
 	}
 
-	messageHash, err := cl.Types.HashStruct(primaryType, msg)
+	messageHash, err := signer.GetTypes().HashStruct(primaryType, msg)
 	if err != nil {
 		return "", err
 	}
 
-	fullHash := MakeFullHash(domainHash, messageHash)
+	fullHash := MakeFullHash(DomainHash, messageHash)
 
-	sig, err := crypto.Sign(fullHash, cl.pk)
+	sig, err := crypto.Sign(fullHash, signer.getPk())
 	if err != nil {
 		return "", err
 	}

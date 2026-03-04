@@ -1,9 +1,7 @@
-package restClient
+package rest
 
 import (
-	"bytes"
 	"context"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -16,23 +14,16 @@ import (
 	"github.com/qiwi1272/ethereal-go"
 )
 
-const USER_AGENT = "ethereal-go-sdk/1.1.0"
-
-type Client struct {
-	baseURL    string
-	http       *http.Client
-	Subaccount *ethereal.Subaccount
-	Types      *abi.TypedData
-	pk         *ecdsa.PrivateKey
-	Address    string
-}
-
 type Environment string
 
 const (
 	Testnet Environment = "https://api.etherealtest.net"
 	Mainnet Environment = "https://api.ethereal.trade"
 )
+
+type Client struct {
+	ethereal.RestClient
+}
 
 func NewClient(ctx context.Context, pk string, env Environment) (*Client, error) {
 	transport := &http.Transport{
@@ -45,13 +36,13 @@ func NewClient(ctx context.Context, pk string, env Environment) (*Client, error)
 		ForceAttemptHTTP2:     true,
 	}
 
-	client := &Client{
-		baseURL: string(env),
-		http: &http.Client{
+	client := &Client{RestClient: ethereal.RestClient{
+		BaseURL: string(env),
+		Http: &http.Client{
 			Transport: transport,
 			Timeout:   10 * time.Second,
 		},
-	}
+	}}
 
 	// load pk
 	if pk == "" {
@@ -59,13 +50,16 @@ func NewClient(ctx context.Context, pk string, env Environment) (*Client, error)
 	}
 
 	// parse key, set address
-	var err error
-	client.pk, err = crypto.HexToECDSA(strip0x(pk))
-	if err != nil {
-		return nil, errors.New("unable to parse private key, likely invalid format")
+	if len(pk) > 1 && pk[:2] == "0x" {
+		pk = pk[2:]
 	}
-	client.Address = crypto.PubkeyToAddress(client.pk.PublicKey).Hex()
+	if ecdsa, err := crypto.HexToECDSA(pk); err == nil {
+		client.SetPk(ecdsa)
+	} else {
+		return nil, err
+	}
 	// ethereal env setup
+	var err error
 	_, err = client.InitDomain(ctx)
 	if err != nil {
 		return nil, errors.Join(errors.New("unable to compute domain hash: "), err)
@@ -84,43 +78,10 @@ type Response[T any] struct {
 	Data T `json:"data"`
 }
 
-type SignedGenericMessage struct {
-	Data      any    `json:"data"`
-	Signature string `json:"signature"`
-}
-
-func (e *Client) do(ctx context.Context, method, path string, body any) ([]byte, error) {
-	b, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(ctx, method, e.baseURL+path, bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", USER_AGENT)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := e.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	out := new(bytes.Buffer)
-	_, err = out.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("ethereal error %d: %s", resp.StatusCode, out.String())
-	}
-	return out.Bytes(), nil
-}
-
 // ---------- Setup ----------
 func (e *Client) InitDomain(ctx context.Context) (string, error) {
 	// init eip 712 data from rpc
-	data, err := e.do(ctx, "GET", "/v1/rpc/config", nil)
+	data, err := e.Do(ctx, "GET", "/v1/rpc/config", nil)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +96,7 @@ func (e *Client) InitDomain(ctx context.Context) (string, error) {
 	// parse flattened type data
 	parsedTypes := abi.Types{}
 	for primaryType, schema := range resp.SigTypes {
-		types, err := ParseTypeSchema(schema)
+		types, err := ethereal.ParseTypeSchema(schema)
 		if err != nil {
 			return "", err
 		}
@@ -149,22 +110,24 @@ func (e *Client) InitDomain(ctx context.Context) (string, error) {
 		{Name: "verifyingContract", Type: "address"},
 	}
 
-	e.Types = &abi.TypedData{
+	types := &abi.TypedData{
 		Types:  parsedTypes,
 		Domain: resp.Domain,
 	}
 
-	domain, err := e.Types.HashStruct("EIP712Domain", e.Types.Domain.Map())
+	e.SetTypes(types)
+
+	domain, err := types.HashStruct("EIP712Domain", types.Domain.Map())
 	if err != nil {
 		panic("failed to compute domain hash: " + err.Error())
 	}
-	domainHash = domain
+	ethereal.DomainHash = domain
 	return hex.EncodeToString(domain), nil
 }
 
 func (e *Client) InitSubaccount(ctx context.Context) error {
 	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.Address)
-	data, err := e.do(ctx, "GET", path, nil)
+	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return err
 	}
@@ -182,13 +145,13 @@ func (e *Client) InitSubaccount(ctx context.Context) error {
 
 // ---------- Methods ----------
 
-func (e *Client) GetPosition(ctx context.Context) ([]Position, error) {
+func (e *Client) GetPosition(ctx context.Context) ([]ethereal.Position, error) {
 	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
-	data, err := e.do(ctx, "GET", path, nil)
+	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-	var resp Response[[]Position]
+	var resp Response[[]ethereal.Position]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}
@@ -196,13 +159,13 @@ func (e *Client) GetPosition(ctx context.Context) ([]Position, error) {
 	return resp.Data, nil
 }
 
-func (e *Client) GetAccountBalance(ctx context.Context) ([]*AccountBalance, error) {
+func (e *Client) GetAccountBalance(ctx context.Context) ([]*ethereal.AccountBalance, error) {
 	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.Subaccount.Id)
-	data, err := e.do(ctx, "GET", path, nil)
+	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-	var resp Response[[]*AccountBalance]
+	var resp Response[[]*ethereal.AccountBalance]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}
@@ -210,16 +173,16 @@ func (e *Client) GetAccountBalance(ctx context.Context) ([]*AccountBalance, erro
 	return resp.Data, nil
 }
 
-func (e *Client) GetProductMap(ctx context.Context) (map[string]Product, error) {
-	data, err := e.do(ctx, "GET", "/v1/product", nil)
+func (e *Client) GetProductMap(ctx context.Context) (map[string]ethereal.Product, error) {
+	data, err := e.Do(ctx, "GET", "/v1/product", nil)
 	if err != nil {
 		return nil, err
 	}
-	var resp Response[[]Product]
+	var resp Response[[]ethereal.Product]
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}
-	products := make(map[string]Product)
+	products := make(map[string]ethereal.Product)
 
 	for _, p := range resp.Data {
 		products[p.Ticker] = p
@@ -228,10 +191,8 @@ func (e *Client) GetProductMap(ctx context.Context) (map[string]Product, error) 
 	return products, nil
 }
 
-func (e *Client) BatchOrder(ctx context.Context, orders []*Order) ([]OrderCreated, error) {
-	payload := make([]Signable, len(orders))
-	for i, order := range orders {
-		payload[i] = order
-	}
-	return SendBatch[OrderCreated](ctx, e, Create, payload)
+func (e *Client) PlaceOrders(ctx context.Context, orders []*ethereal.Order) ([]*ethereal.OrderCreated, error) {
+	batch := ethereal.NewBatch[*ethereal.Order, *ethereal.OrderCreated](orders...)
+	var cl ethereal.BatchOrderClient = e
+	return batch.SendBatch(ctx, &cl, ethereal.Create)
 }

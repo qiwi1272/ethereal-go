@@ -11,11 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/qiwi1272/ethereal-go"
-	restClient "github.com/qiwi1272/ethereal-go/rest_client"
+	"github.com/qiwi1272/ethereal-go/rest"
 )
 
-func getTestOrder() restClient.Order {
-	return restClient.Order{
+func getTestOrder() ethereal.Order {
+	return ethereal.Order{
 		Sender:     "0xdeadbeef00000000000000000000000000000000",
 		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
 		Quantity:   "1",
@@ -150,7 +150,7 @@ func TestOrderSigning(t *testing.T) {
 	order := getTestOrder()
 	cxt := context.Background()
 	pk := "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a" // private key for 0xdeadbeef...
-	client, err := restClient.NewClient(cxt, pk, restClient.Testnet)
+	client, err := rest.NewClient(cxt, pk, rest.Testnet)
 
 	fmt.Println("Expected Signer address: ", client.Address)
 
@@ -169,12 +169,12 @@ func TestOrderSigning(t *testing.T) {
 	if err != nil {
 		panic("Unable to convert order to message: " + err.Error())
 	}
-	messageHash, err := client.Types.HashStruct("TradeOrder", msg)
+	messageHash, err := client.GetTypes().HashStruct("TradeOrder", msg)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("Message Hash:", common.Bytes2Hex(messageHash))
-	signature, err := restClient.Sign(&order, "TradeOrder", client)
+	signature, err := ethereal.Sign(&order, "TradeOrder", client)
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +183,7 @@ func TestOrderSigning(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fullHash := restClient.MakeFullHash(domainBytes, messageHash)
+	fullHash := ethereal.MakeFullHash(domainBytes, messageHash)
 	fmt.Println("Full Hash:", common.Bytes2Hex(fullHash))
 
 	expectedSignature := "0x82aed7486e9855459f58537e413760597e689d3ba7b859f56b6edc730e044fff2888ccf92cd282a8299d8d6a76f8bf0aa93d97f30340c4bb0d27b626aca62f211b"
@@ -194,8 +194,8 @@ func TestOrderSigning(t *testing.T) {
 
 	// We extract the exact payload
 
-	payload := restClient.SignedGenericMessage{
-		Data:      order,
+	payload := ethereal.SignedMessage[*ethereal.Order]{
+		Data:      &order,
 		Signature: signature,
 	}
 	payloadJson, err := json.MarshalIndent(payload, "", "  ")

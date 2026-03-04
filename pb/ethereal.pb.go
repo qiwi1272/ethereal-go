@@ -4,15 +4,16 @@
 // 	protoc        v3.21.12
 // source: ethereal.proto
 
-package wssClient
+package pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -1461,7 +1462,8 @@ const file_ethereal_proto_rawDesc = "" +
 	"\x1aSubaccountLiquidationEvent\x12\f\n" +
 	"\x01e\x18\x01 \x01(\tR\x01e\x12\f\n" +
 	"\x01t\x18\x02 \x01(\x03R\x01t\x12:\n" +
-	"\x04data\x18\x03 \x01(\v2&.rim.v1.ethereal.SubaccountLiquidationR\x04dataB)Z'/ethereal-go/websocket_client;wssClientb\x06proto3"
+	"\x04data\x18\x03 \x01(\v2&.rim.v1.ethereal.SubaccountLiquidationR\x04dataB\fZ\n" +
+	"/protos;pbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once

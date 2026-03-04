@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "/ethereal-go/rest_client;pb";
+option go_package = "/ethereal-go/pb;pb";
 
 package rim.v1.book;
 

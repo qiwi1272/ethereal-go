@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "/ethereal-go/websocket_client;wssClient";
+option go_package = "/ethereal-go/pb;pb";
 
 package rim.v1.ethereal;
 

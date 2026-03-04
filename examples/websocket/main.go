@@ -9,8 +9,10 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
-	restClient "github.com/qiwi1272/ethereal-go/rest_client"
-	wssClient "github.com/qiwi1272/ethereal-go/websocket_client"
+	"github.com/qiwi1272/ethereal-go"
+	"github.com/qiwi1272/ethereal-go/pb"
+	"github.com/qiwi1272/ethereal-go/rest"
+	"github.com/qiwi1272/ethereal-go/websocket"
 )
 
 func main() {
@@ -21,18 +23,18 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	rest, err := restClient.NewClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Testnet)
+	rest, err := rest.NewClient(ctx, os.Getenv("ETHEREAL_PK"), rest.Testnet)
 	if err != nil {
 		panic(err)
 	}
 	sid := rest.Subaccount.Id
 
-	var symbols map[string]restClient.Product
+	var symbols map[string]ethereal.Product
 	if symbols, err = rest.GetProductMap(ctx); err != nil {
 		panic(err)
 	}
 
-	ws := wssClient.NewClient(ctx)
+	ws := websocket.NewClient(ctx, websocket.Testnet)
 	defer ws.Close()
 
 	for symbolKey := range symbols {
@@ -60,25 +62,25 @@ func main() {
 		log.Fatal("SubscribeTokenTransfer:", err)
 	}
 
-	ws.OnBook(func(diff *wssClient.L2Book) {
-		fmt.Printf("called back L2Book: %v\n", diff)
+	ws.OnBook(func(diff *pb.L2Book) {
+		//fmt.Printf("called back L2Book: %v\n", diff)
 	})
-	ws.OnPrice(func(mp *wssClient.MarketPrice) {
-		fmt.Printf("called back MarketPrice: %v\n", mp)
+	ws.OnPrice(func(mp *pb.MarketPrice) {
+		//fmt.Printf("called back MarketPrice: %v\n", mp)
 	})
-	ws.OnLiquidation(func(sl *wssClient.SubaccountLiquidationEvent) {
+	ws.OnLiquidation(func(sl *pb.SubaccountLiquidationEvent) {
 		fmt.Printf("called back SubaccountLiquidation: %v\n", sl)
 	})
-	ws.OnOrderFill(func(of *wssClient.OrderFillEvent) {
-		fmt.Printf("called back OrderFillEvent: %v\n", of)
+	ws.OnOrderFill(func(of *pb.OrderFillEvent) {
+		//fmt.Printf("called back OrderFillEvent: %v\n", of)
 	})
-	ws.OnOrderUpdate(func(o *wssClient.OrderUpdateEvent) {
-		fmt.Printf("called back OrderUpdateEvent: %v\n", o)
+	ws.OnOrderUpdate(func(o *pb.OrderUpdateEvent) {
+		//fmt.Printf("called back OrderUpdateEvent: %v\n", o)
 	})
-	ws.OnTradeFill(func(tf *wssClient.TradeFillEvent) {
-		fmt.Printf("called back TradeFillEvent: %v\n", tf)
+	ws.OnTradeFill(func(tf *pb.TradeFillEvent) {
+		//fmt.Printf("called back TradeFillEvent: %v\n", tf)
 	})
-	ws.OnTransfer(func(t *wssClient.Transfer) {
+	ws.OnTransfer(func(t *pb.Transfer) {
 		fmt.Printf("called back Transfer: %v\n", t)
 	})
 

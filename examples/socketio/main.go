@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	restClient "github.com/qiwi1272/ethereal-go/rest_client"
-	socketioClient "github.com/qiwi1272/ethereal-go/socketio_client"
+	"github.com/qiwi1272/ethereal-go/rest"
+	"github.com/qiwi1272/ethereal-go/socketio"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	}
 	ctx := context.Background()
 	// create client and fetch products
-	rest, err := restClient.NewClient(ctx, os.Getenv("ETHEREAL_PK"), restClient.Mainnet)
+	rest, err := rest.NewClient(ctx, os.Getenv("ETHEREAL_PK"), rest.Mainnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -30,7 +30,7 @@ func main() {
 
 	eth_perp := products["ETHUSD"]
 
-	ws := socketioClient.NewClient()
+	ws := socketio.NewClient(socketio.Mainnet)
 
 	ws.OnBookDepth(bookHandler)
 
@@ -41,8 +41,8 @@ func main() {
 	select {}
 }
 
-func bookHandler(v *socketioClient.BookDiff) {
-	fmt.Printf("BookDepth update: %+v\n", v.ProductId)
+func bookHandler(v socketio.BookDepthStream) {
+	fmt.Printf("BookDepth update: %+v\n", v.ProductID)
 	fmt.Printf("BookDepth update: %+v\n", v.Bids)
 	fmt.Printf("BookDepth update: %+v\n", v.Asks)
 }

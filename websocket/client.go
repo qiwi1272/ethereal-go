@@ -22,17 +22,13 @@ const (
 )
 
 type Client struct {
-	Con                *websocket.Conn
-	conMu              *sync.Mutex
-	env                Environment
-	bookHandler        func(*pb.L2Book)      // non-array
-	priceHandler       func(*pb.MarketPrice) // non-array
-	tradeFillHandler   func(*pb.TradeFillEvent)
-	liquidationHandler func(*pb.SubaccountLiquidationEvent)
-	orderUpdateHandler func(*pb.OrderUpdateEvent)
-	orderFillHandler   func(*pb.OrderFillEvent)
-	transferHandler    func(*pb.Transfer) // non-array
-	hbCancel           context.CancelCauseFunc
+	Con           *websocket.Conn
+	conMu         *sync.Mutex
+	env           Environment
+	subscriptions []pb.Event[proto.Message]
+	callbacks     map[string]func(proto.Message)
+	hbCancel      context.CancelCauseFunc
+	pbOpts        *protojson.UnmarshalOptions
 }
 
 func NewClient(parent context.Context, env Environment) *Client {
@@ -43,9 +39,12 @@ func NewClient(parent context.Context, env Environment) *Client {
 	}
 
 	cl := &Client{
-		Con:   c,
-		conMu: &sync.Mutex{},
-		env:   env,
+		Con:           c,
+		conMu:         &sync.Mutex{},
+		env:           env,
+		subscriptions: make([]pb.Event[proto.Message], 0),
+		callbacks:     make(map[string]func(proto.Message)),
+		pbOpts:        &protojson.UnmarshalOptions{AllowPartial: true},
 	}
 
 	cl.keepalive(ctx, cancel)
@@ -54,53 +53,146 @@ func NewClient(parent context.Context, env Environment) *Client {
 	return cl
 }
 
-type Intent string
-
-const (
-	sub   Intent = "subscribe"
-	unsub Intent = "unsubscribe"
-)
-
-type SubIntent[T eventData] struct {
-	I Intent    `json:"event"`
-	D eventData `json:"data"`
-}
-
-func marshalSubscribe[T eventData, I Intent](data T) (b []byte, err error) {
-	req := &SubIntent[T]{I: sub, D: data}
-	return json.Marshal(req)
-}
-
-func marshalUnsubscribe[T eventData](data T) (b []byte, err error) {
-	req := &SubIntent[T]{I: unsub, D: data}
-	return json.Marshal(req)
-}
-
-func marshalToValueCallback[T proto.Message](data []byte, pb T, cb func(T)) (err error) {
-	if err := protojson.Unmarshal(data, pb); err != nil {
-		return err
+func (c *Client) Subscribe(ctx context.Context, event pb.Event[proto.Message], to string) (err error) {
+	var bytes []byte
+	fmt.Println(to)
+	if bytes, err = event.MarshalIntent(to, pb.Sub); err != nil {
+		return
 	}
-	cb(pb)
+	fmt.Println(string(bytes))
+	if err = c.Req(ctx, bytes); err != nil {
+		c.subscriptions = append(c.subscriptions, event)
+	}
 	return
 }
 
-type eventData interface{}
-
-type SymbolEvent struct {
-	eventData
-	T string `json:"type"`
-	S string `json:"symbol"`
+func (c *Client) Unsubscribe(ctx context.Context, event pb.Event[proto.Message], to string) (err error) {
+	var bytes []byte
+	if bytes, err = event.MarshalIntent(to, pb.Unsub); err != nil {
+		return err
+	}
+	return c.Req(ctx, bytes)
 }
 
-type SubaccountEvent struct {
-	eventData
-	T string `json:"type"`
-	S string `json:"subaccountId"`
+func (c *Client) SubscribeWithCallback(ctx context.Context, event pb.Event[proto.Message], to string, cb func(proto.Message)) (err error) {
+	if err = c.Subscribe(ctx, event, to); err == nil {
+		c.callbacks[event.EventName()] = cb
+	}
+	return
 }
 
-func (c *Client) req(ctx context.Context, payload []byte) (err error) {
+func (c *Client) OnEvent(event pb.Event[proto.Message], cb func(proto.Message)) {
+	c.callbacks[event.EventName()] = cb
+}
+
+func (c *Client) Req(ctx context.Context, payload []byte) (err error) {
 	return c.Con.Write(ctx, websocket.MessageBinary, payload)
 }
+
+type wssMsg struct {
+	Event string          `json:"e"`
+	Ts    int64           `json:"t"`
+	Data  json.RawMessage `json:"data"`
+}
+
+func (c *Client) Listen(parent context.Context) error {
+	ctx, cancel := context.WithCancelCause(parent)
+	defer cancel(nil)
+	defer c.Close()
+
+	for {
+		_, data, err := c.Con.Read(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return context.Cause(ctx)
+			}
+			cancel(err)
+			return err
+		}
+
+		var e wssMsg
+		if err := json.Unmarshal(data, &e); err != nil {
+			if status := new(pb.WebsocketStatus); c.pbOpts.Unmarshal(data, status) == nil {
+				if !status.Ok {
+					fmt.Println(status.Code)
+				}
+			} else {
+				panic(err)
+			}
+			continue
+		}
+
+		if cb, ok := c.callbacks[e.Event]; ok {
+			event := pb.EventEnum(e.Event)
+			if err = event.UnmarshalToCallback(e.Data, cb); err != nil {
+				cancel(err)
+				return err
+			}
+		}
+	}
+}
+
+func (c *Client) keepalive(ctx context.Context, cancel context.CancelCauseFunc) {
+	go func() {
+		t := time.NewTicker(20 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				// Ping will return error if connection is dead
+				if err := c.Con.Ping(ctx); err != nil {
+					cancel(err)
+					return
+				}
+			}
+		}
+	}()
+}
+
+func (c *Client) Resubscribe(parent context.Context) error {
+	c.Close()
+
+	c.conMu.Lock()
+	defer c.conMu.Unlock()
+
+	ctx, cancel := context.WithCancelCause(parent)
+
+	// replace con and restart listener with new context
+	var err error
+	c.Con, _, err = websocket.Dial(ctx, string(c.env), nil)
+	if err != nil {
+		cancel(err)
+		return err
+	}
+	c.hbCancel = cancel
+	c.keepalive(ctx, cancel)
+
+	return nil
+}
+
+// func (c *Client) UnsubscribeAll(ctx context.Context) (err error) {
+// 	for _, s := range c.subscriptions {
+// 		if err = c.Unsubscribe(ctx, s); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return
+// }
+
+func (c *Client) Close() {
+	c.conMu.Lock()
+	defer c.conMu.Unlock()
+	if c.hbCancel != nil {
+		c.hbCancel(nil)
+	}
+	if c.Con != nil {
+		c.Con.Close(websocket.StatusNormalClosure, "closing")
+	}
+}
+
+/*
 
 func (c *Client) SubscribeBook(ctx context.Context, symbol string) (err error) {
 	var b []byte
@@ -284,138 +376,4 @@ func (c *Client) OnTransfer(callback func(*pb.Transfer)) {
 	c.transferHandler = callback
 }
 
-type wssMsg struct {
-	Event string          `json:"e"`
-	Ts    int64           `json:"t"`
-	Data  json.RawMessage `json:"data"`
-}
-
-func (c *Client) Listen(parent context.Context) error {
-	ctx, cancel := context.WithCancelCause(parent)
-	defer cancel(nil)
-	defer c.Close()
-
-	for {
-		_, data, err := c.Con.Read(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return context.Cause(ctx)
-			}
-			cancel(err)
-			return err
-		}
-
-		var msg wssMsg
-		if err := json.Unmarshal(data, &msg); err != nil {
-			cancel(err)
-			return err
-		}
-
-		switch msg.Event {
-		case "L2Book":
-			var diff pb.L2Book
-			if err := marshalToValueCallback(msg.Data, &diff, c.bookHandler); err != nil {
-				cancel(err)
-				return err
-			}
-
-		case "MarketPrice":
-			var mp pb.MarketPrice
-			if err := marshalToValueCallback(msg.Data, &mp, c.priceHandler); err != nil {
-				cancel(err)
-				return err
-			}
-
-		case "SubaccountLiquidation":
-			var lq pb.SubaccountLiquidationEvent
-			if err := marshalToValueCallback(msg.Data, &lq, c.liquidationHandler); err != nil {
-				fmt.Println(string(data))
-				cancel(err)
-				return err
-			}
-
-		case "OrderFill":
-			var ou pb.OrderFillEvent
-			if err := marshalToValueCallback(data, &ou, c.orderFillHandler); err != nil {
-				cancel(err)
-				return err
-			}
-
-		case "OrderUpdate":
-			var ou pb.OrderUpdateEvent
-			if err := marshalToValueCallback(data, &ou, c.orderUpdateHandler); err != nil {
-				cancel(err)
-				return err
-			}
-
-		case "TradeFill":
-			var tf pb.TradeFillEvent
-			if err := marshalToValueCallback(data, &tf, c.tradeFillHandler); err != nil {
-				cancel(err)
-				return err
-			}
-
-		case "TokenTransfer":
-			var t pb.Transfer
-			if err := marshalToValueCallback(data, &t, c.transferHandler); err != nil {
-				fmt.Println(string(data))
-				cancel(err)
-				return err
-			}
-
-		default:
-			fmt.Printf("unknown event, raw: %s\n", string(data))
-		}
-	}
-}
-
-func (c *Client) keepalive(ctx context.Context, cancel context.CancelCauseFunc) {
-	go func() {
-		t := time.NewTicker(20 * time.Second)
-		defer t.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-t.C:
-				// Ping will return error if connection is dead
-				if err := c.Con.Ping(ctx); err != nil {
-					cancel(err)
-					return
-				}
-			}
-		}
-	}()
-}
-
-func (c *Client) Resubscribe(parent context.Context) error {
-	c.Close()
-
-	c.conMu.Lock()
-	defer c.conMu.Unlock()
-
-	ctx, cancel := context.WithCancelCause(parent)
-
-	// replace con and restart listener with new context
-	var err error
-	c.Con, _, err = websocket.Dial(ctx, string(c.env), nil)
-	if err != nil {
-		cancel(err)
-		return err
-	}
-	c.hbCancel = cancel
-	c.keepalive(ctx, cancel)
-
-	return nil
-}
-
-func (c *Client) Close() {
-	c.conMu.Lock()
-	defer c.conMu.Unlock()
-	if c.hbCancel != nil {
-		c.hbCancel(nil)
-	}
-	if c.Con != nil {
-		c.Con.Close(websocket.StatusNormalClosure, "closing")
-	}
-}
+*/

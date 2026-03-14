@@ -12,7 +12,8 @@ import (
 	"github.com/qiwi1272/ethereal-go"
 	"github.com/qiwi1272/ethereal-go/pb"
 	"github.com/qiwi1272/ethereal-go/rest"
-	"github.com/qiwi1272/ethereal-go/websocket"
+	ws "github.com/qiwi1272/ethereal-go/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// load all the symbols using a rest client
 	rest, err := rest.NewClient(ctx, os.Getenv("ETHEREAL_PK"), rest.Testnet)
 	if err != nil {
 		panic(err)
@@ -34,55 +36,61 @@ func main() {
 		panic(err)
 	}
 
-	ws := websocket.NewClient(ctx, websocket.Testnet)
+	ws := ws.NewClient(ctx, ws.Testnet)
 	defer ws.Close()
 
+	diffCb := func(m proto.Message) {
+		diff := m.(*pb.L2Book)
+		fmt.Printf("diff: %v", diff)
+	}
+
+	cb := func(m proto.Message) {
+		fmt.Println(m)
+	}
+
+	// many different subscription examples, all achieving the same result.
+	// error channel for callbacks, ethereal.Subscription namespace, "resubscribe" intent
+
+	// for all exchange symbols
 	for symbolKey := range symbols {
-		if err := ws.SubscribeMarketPrice(ctx, symbolKey); err != nil {
-			log.Fatal("SubscribeMarketPrice:", err)
+		// callbacks here are overwritten every iteration.
+		// subscribe to book with a protobuf enum, and callback to diffCB
+		if err := ws.SubscribeWithCallback(ctx, pb.EventType_EVENT_TYPE_L2_BOOK, symbolKey, diffCb); err != nil {
+			log.Fatal("EventType_EVENT_TYPE_L2_BOOK: ", err)
 		}
-		if err := ws.SubscribeBook(ctx, symbolKey); err != nil {
-			log.Fatal("SubscribeBook:", err)
+		// subscribe to trade fill with a protobuf struct
+		if err := ws.Subscribe(ctx, &pb.TradeFill{}, symbolKey); err != nil {
+			log.Fatal("TradeFill: ", err)
 		}
-		if err := ws.SubscribeFill(ctx, symbolKey); err != nil {
-			log.Fatal("SubscribeFill:", err)
-		}
+		ws.OnEvent(&pb.TradeFill{}, cb)
 	}
 
-	if err := ws.SubscribeLiquidation(ctx, sid); err != nil {
-		log.Fatal("SubscribeLiquidation:", err)
+	// subscribe to a SubaccountLiquidation protobuf struct, with a callback
+	if err := ws.SubscribeWithCallback(ctx, &pb.SubaccountLiquidation{}, sid, cb); err != nil {
+		log.Fatal("SubaccountLiquidation: ", err)
 	}
-	if err := ws.SubscribeOrderFill(ctx, sid); err != nil {
-		log.Fatal("SubscribeOrderFill:", err)
-	}
-	if err := ws.SubscribeOrderUpdate(ctx, sid); err != nil {
-		log.Fatal("SubscribeOrderUpdate:", err)
-	}
-	if err := ws.SubscribeTokenTransfer(ctx, sid); err != nil {
-		log.Fatal("SubscribeTokenTransfer:", err)
+	// subscribe to a order fill protobuf enum, with a callback
+	if err := ws.SubscribeWithCallback(ctx, pb.EventType_EVENT_TYPE_ORDER_FILL, sid, func(m proto.Message) {
+		fill := m.(*pb.OrderFill)
+		fmt.Println(fill)
+	}); err != nil {
+		log.Fatal("EventType_EVENT_TYPE_ORDER_FILL: ", err)
 	}
 
-	ws.OnBook(func(diff *pb.L2Book) {
-		//fmt.Printf("called back L2Book: %v\n", diff)
-	})
-	ws.OnPrice(func(mp *pb.MarketPrice) {
-		//fmt.Printf("called back MarketPrice: %v\n", mp)
-	})
-	ws.OnLiquidation(func(sl *pb.SubaccountLiquidationEvent) {
-		fmt.Printf("called back SubaccountLiquidation: %v\n", sl)
-	})
-	ws.OnOrderFill(func(of *pb.OrderFillEvent) {
-		//fmt.Printf("called back OrderFillEvent: %v\n", of)
-	})
-	ws.OnOrderUpdate(func(o *pb.OrderUpdateEvent) {
-		//fmt.Printf("called back OrderUpdateEvent: %v\n", o)
-	})
-	ws.OnTradeFill(func(tf *pb.TradeFillEvent) {
-		//fmt.Printf("called back TradeFillEvent: %v\n", tf)
-	})
-	ws.OnTransfer(func(t *pb.Transfer) {
-		fmt.Printf("called back Transfer: %v\n", t)
-	})
+	// underlying calls of subscribing to a protobuf struct
+	if bytes, err := new(pb.OrderUpdate).MarshalIntent(sid, pb.Sub); err == nil {
+		ws.Req(ctx, bytes)
+	} else {
+		log.Fatal("OrderUpdate: ", err)
+	}
+	ws.OnEvent(new(pb.OrderUpdate), cb)
+	// underlying calls of subscribing to a protobuf enum
+	if bytes, err := pb.EventType_EVENT_TYPE_TRANSFER.MarshalIntent(sid, pb.Sub); err == nil {
+		ws.Req(ctx, bytes)
+	} else {
+		log.Fatal("EventType_EVENT_TYPE_TRANSFER: ", err)
+	}
+	ws.OnEvent(pb.EventType_EVENT_TYPE_TRANSFER, cb)
 
 	errCh := make(chan error, 1)
 	go func() {

@@ -18,11 +18,9 @@ build:
 	go build -o bin/example_limit_multiple examples/limit_multiple/main.go
 	go build -o bin/example_limit_single examples/limit_single/main.go
 	go build -o bin/example_socketio examples/socketio/main.go
+	go build -o bin/example_websocket examples/websocket/main.go
 
 deps:
 	go get -u ./...
-
-proto:
-	protoc -I=_pb/ --go_out=../ book.proto
 
 all: fmt tidy vet test build

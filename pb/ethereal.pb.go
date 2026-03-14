@@ -7,13 +7,12 @@
 package pb
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -23,13 +22,75 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type EventType int32
+
+const (
+	EventType_EVENT_TYPE_UNSPECIFIED            EventType = 0
+	EventType_EVENT_TYPE_L2_BOOK                EventType = 1
+	EventType_EVENT_TYPE_MARKET_PRICE           EventType = 2
+	EventType_EVENT_TYPE_SUBACCOUNT_LIQUIDATION EventType = 3
+	EventType_EVENT_TYPE_ORDER_FILL             EventType = 4
+	EventType_EVENT_TYPE_ORDER_UPDATE           EventType = 5
+	EventType_EVENT_TYPE_TRADE_FILL             EventType = 6
+	EventType_EVENT_TYPE_TRANSFER               EventType = 7
+)
+
+// Enum value maps for EventType.
+var (
+	EventType_name = map[int32]string{
+		0: "EVENT_TYPE_UNSPECIFIED",
+		1: "EVENT_TYPE_L2_BOOK",
+		2: "EVENT_TYPE_MARKET_PRICE",
+		3: "EVENT_TYPE_SUBACCOUNT_LIQUIDATION",
+		4: "EVENT_TYPE_ORDER_FILL",
+		5: "EVENT_TYPE_ORDER_UPDATE",
+		6: "EVENT_TYPE_TRADE_FILL",
+		7: "EVENT_TYPE_TRANSFER",
+	}
+	EventType_value = map[string]int32{
+		"EVENT_TYPE_UNSPECIFIED":            0,
+		"EVENT_TYPE_L2_BOOK":                1,
+		"EVENT_TYPE_MARKET_PRICE":           2,
+		"EVENT_TYPE_SUBACCOUNT_LIQUIDATION": 3,
+		"EVENT_TYPE_ORDER_FILL":             4,
+		"EVENT_TYPE_ORDER_UPDATE":           5,
+		"EVENT_TYPE_TRADE_FILL":             6,
+		"EVENT_TYPE_TRANSFER":               7,
+	}
+)
+
+func (x EventType) Enum() *EventType {
+	p := new(EventType)
+	*p = x
+	return p
+}
+
+func (x EventType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EventType) Descriptor() protoreflect.EnumDescriptor {
+	return file_ethereal_proto_enumTypes[0].Descriptor()
+}
+
+func (EventType) Type() protoreflect.EnumType {
+	return &file_ethereal_proto_enumTypes[0]
+}
+
+func (x EventType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EventType.Descriptor instead.
+func (EventType) EnumDescriptor() ([]byte, []int) {
+	return file_ethereal_proto_rawDescGZIP(), []int{0}
+}
+
 type L2Book struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	S             string                 `protobuf:"bytes,1,opt,name=s,proto3" json:"s,omitempty"`
 	T             int64                  `protobuf:"varint,2,opt,name=t,proto3" json:"t,omitempty"`
-	Pt            int64                  `protobuf:"varint,3,opt,name=pt,proto3" json:"pt,omitempty"`
-	BidAmt        string                 `protobuf:"bytes,4,opt,name=bid_amt,json=bidAmt,proto3" json:"bid_amt,omitempty"`
-	AskAmt        string                 `protobuf:"bytes,5,opt,name=ask_amt,json=askAmt,proto3" json:"ask_amt,omitempty"`
+	Pt            *int64                 `protobuf:"varint,3,opt,name=pt,proto3,oneof" json:"pt,omitempty"`
 	A             []*structpb.ListValue  `protobuf:"bytes,6,rep,name=a,proto3" json:"a,omitempty"`
 	B             []*structpb.ListValue  `protobuf:"bytes,7,rep,name=b,proto3" json:"b,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -81,24 +142,10 @@ func (x *L2Book) GetT() int64 {
 }
 
 func (x *L2Book) GetPt() int64 {
-	if x != nil {
-		return x.Pt
+	if x != nil && x.Pt != nil {
+		return *x.Pt
 	}
 	return 0
-}
-
-func (x *L2Book) GetBidAmt() string {
-	if x != nil {
-		return x.BidAmt
-	}
-	return ""
-}
-
-func (x *L2Book) GetAskAmt() string {
-	if x != nil {
-		return x.AskAmt
-	}
-	return ""
 }
 
 func (x *L2Book) GetA() []*structpb.ListValue {
@@ -972,15 +1019,9 @@ func (x *Transfer) GetLzEid() string {
 }
 
 type EventMessage struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	E     string                 `protobuf:"bytes,1,opt,name=e,proto3" json:"e,omitempty"`
-	T     int64                  `protobuf:"varint,2,opt,name=t,proto3" json:"t,omitempty"`
-	// Types that are valid to be assigned to Data:
-	//
-	//	*EventMessage_MarketPrice
-	//	*EventMessage_BookDiff
-	//	*EventMessage_Transfer
-	Data          isEventMessage_Data `protobuf_oneof:"data"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	E             string                 `protobuf:"bytes,1,opt,name=e,proto3" json:"e,omitempty"`
+	T             int64                  `protobuf:"varint,2,opt,name=t,proto3" json:"t,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1028,62 +1069,6 @@ func (x *EventMessage) GetT() int64 {
 	}
 	return 0
 }
-
-func (x *EventMessage) GetData() isEventMessage_Data {
-	if x != nil {
-		return x.Data
-	}
-	return nil
-}
-
-func (x *EventMessage) GetMarketPrice() *MarketPrice {
-	if x != nil {
-		if x, ok := x.Data.(*EventMessage_MarketPrice); ok {
-			return x.MarketPrice
-		}
-	}
-	return nil
-}
-
-func (x *EventMessage) GetBookDiff() *L2Book {
-	if x != nil {
-		if x, ok := x.Data.(*EventMessage_BookDiff); ok {
-			return x.BookDiff
-		}
-	}
-	return nil
-}
-
-func (x *EventMessage) GetTransfer() *Transfer {
-	if x != nil {
-		if x, ok := x.Data.(*EventMessage_Transfer); ok {
-			return x.Transfer
-		}
-	}
-	return nil
-}
-
-type isEventMessage_Data interface {
-	isEventMessage_Data()
-}
-
-type EventMessage_MarketPrice struct {
-	MarketPrice *MarketPrice `protobuf:"bytes,6,opt,name=market_price,json=marketPrice,proto3,oneof"`
-}
-
-type EventMessage_BookDiff struct {
-	BookDiff *L2Book `protobuf:"bytes,7,opt,name=book_diff,json=bookDiff,proto3,oneof"`
-}
-
-type EventMessage_Transfer struct {
-	Transfer *Transfer `protobuf:"bytes,12,opt,name=transfer,proto3,oneof"`
-}
-
-func (*EventMessage_MarketPrice) isEventMessage_Data() {}
-
-func (*EventMessage_BookDiff) isEventMessage_Data() {}
-
-func (*EventMessage_Transfer) isEventMessage_Data() {}
 
 // proto array events //
 // EventMessage "oneof" field is not compatable with these messages
@@ -1328,19 +1313,130 @@ func (x *SubaccountLiquidationEvent) GetData() *SubaccountLiquidation {
 	return nil
 }
 
+type WebsocketMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	E             string                 `protobuf:"bytes,1,opt,name=e,proto3" json:"e,omitempty"`
+	T             int64                  `protobuf:"varint,2,opt,name=t,proto3" json:"t,omitempty"`
+	Data          *structpb.Struct       `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WebsocketMessage) Reset() {
+	*x = WebsocketMessage{}
+	mi := &file_ethereal_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebsocketMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebsocketMessage) ProtoMessage() {}
+
+func (x *WebsocketMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ethereal_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebsocketMessage.ProtoReflect.Descriptor instead.
+func (*WebsocketMessage) Descriptor() ([]byte, []int) {
+	return file_ethereal_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *WebsocketMessage) GetE() string {
+	if x != nil {
+		return x.E
+	}
+	return ""
+}
+
+func (x *WebsocketMessage) GetT() int64 {
+	if x != nil {
+		return x.T
+	}
+	return 0
+}
+
+func (x *WebsocketMessage) GetData() *structpb.Struct {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type WebsocketStatus struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WebsocketStatus) Reset() {
+	*x = WebsocketStatus{}
+	mi := &file_ethereal_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebsocketStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebsocketStatus) ProtoMessage() {}
+
+func (x *WebsocketStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_ethereal_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebsocketStatus.ProtoReflect.Descriptor instead.
+func (*WebsocketStatus) Descriptor() ([]byte, []int) {
+	return file_ethereal_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *WebsocketStatus) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *WebsocketStatus) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
 var File_ethereal_proto protoreflect.FileDescriptor
 
 const file_ethereal_proto_rawDesc = "" +
 	"\n" +
-	"\x0eethereal.proto\x12\x0frim.v1.ethereal\x1a\x1cgoogle/protobuf/struct.proto\"\xba\x01\n" +
+	"\x0eethereal.proto\x12\x0frim.v1.ethereal\x1a\x1cgoogle/protobuf/struct.proto\"\x94\x01\n" +
 	"\x06L2Book\x12\f\n" +
 	"\x01s\x18\x01 \x01(\tR\x01s\x12\f\n" +
-	"\x01t\x18\x02 \x01(\x03R\x01t\x12\x0e\n" +
-	"\x02pt\x18\x03 \x01(\x03R\x02pt\x12\x17\n" +
-	"\abid_amt\x18\x04 \x01(\tR\x06bidAmt\x12\x17\n" +
-	"\aask_amt\x18\x05 \x01(\tR\x06askAmt\x12(\n" +
+	"\x01t\x18\x02 \x01(\x03R\x01t\x12\x13\n" +
+	"\x02pt\x18\x03 \x01(\x03H\x00R\x02pt\x88\x01\x01\x12(\n" +
 	"\x01a\x18\x06 \x03(\v2\x1a.google.protobuf.ListValueR\x01a\x12(\n" +
-	"\x01b\x18\a \x03(\v2\x1a.google.protobuf.ListValueR\x01b\"\xb3\x01\n" +
+	"\x01b\x18\a \x03(\v2\x1a.google.protobuf.ListValueR\x01bB\x05\n" +
+	"\x03_pt\"\xb3\x01\n" +
 	"\vMarketPrice\x12\f\n" +
 	"\x01s\x18\x01 \x01(\tR\x01s\x12\x15\n" +
 	"\x06bid_px\x18\x02 \x01(\tR\x05bidPx\x12\x15\n" +
@@ -1439,14 +1535,10 @@ const file_ethereal_proto_rawDesc = "" +
 	"\a_fin_txB\n" +
 	"\n" +
 	"\b_lz_addrB\t\n" +
-	"\a_lz_eid\"\xe6\x01\n" +
+	"\a_lz_eid\"*\n" +
 	"\fEventMessage\x12\f\n" +
 	"\x01e\x18\x01 \x01(\tR\x01e\x12\f\n" +
-	"\x01t\x18\x02 \x01(\x03R\x01t\x12A\n" +
-	"\fmarket_price\x18\x06 \x01(\v2\x1c.rim.v1.ethereal.MarketPriceH\x00R\vmarketPrice\x126\n" +
-	"\tbook_diff\x18\a \x01(\v2\x17.rim.v1.ethereal.L2BookH\x00R\bbookDiff\x127\n" +
-	"\btransfer\x18\f \x01(\v2\x19.rim.v1.ethereal.TransferH\x00R\btransferB\x06\n" +
-	"\x04data\"`\n" +
+	"\x01t\x18\x02 \x01(\x03R\x01t\"`\n" +
 	"\x10OrderUpdateEvent\x12\f\n" +
 	"\x01e\x18\x01 \x01(\tR\x01e\x12\f\n" +
 	"\x01t\x18\x02 \x01(\x03R\x01t\x120\n" +
@@ -1462,8 +1554,23 @@ const file_ethereal_proto_rawDesc = "" +
 	"\x1aSubaccountLiquidationEvent\x12\f\n" +
 	"\x01e\x18\x01 \x01(\tR\x01e\x12\f\n" +
 	"\x01t\x18\x02 \x01(\x03R\x01t\x12:\n" +
-	"\x04data\x18\x03 \x01(\v2&.rim.v1.ethereal.SubaccountLiquidationR\x04dataB\fZ\n" +
-	"/protos;pbb\x06proto3"
+	"\x04data\x18\x03 \x01(\v2&.rim.v1.ethereal.SubaccountLiquidationR\x04data\"[\n" +
+	"\x10WebsocketMessage\x12\f\n" +
+	"\x01e\x18\x01 \x01(\tR\x01e\x12\f\n" +
+	"\x01t\x18\x02 \x01(\x03R\x01t\x12+\n" +
+	"\x04data\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x04data\"5\n" +
+	"\x0fWebsocketStatus\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code*\xef\x01\n" +
+	"\tEventType\x12\x1a\n" +
+	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12EVENT_TYPE_L2_BOOK\x10\x01\x12\x1b\n" +
+	"\x17EVENT_TYPE_MARKET_PRICE\x10\x02\x12%\n" +
+	"!EVENT_TYPE_SUBACCOUNT_LIQUIDATION\x10\x03\x12\x19\n" +
+	"\x15EVENT_TYPE_ORDER_FILL\x10\x04\x12\x1b\n" +
+	"\x17EVENT_TYPE_ORDER_UPDATE\x10\x05\x12\x19\n" +
+	"\x15EVENT_TYPE_TRADE_FILL\x10\x06\x12\x17\n" +
+	"\x13EVENT_TYPE_TRANSFER\x10\aB\x14Z\x12/ethereal-go/pb;pbb\x06proto3"
 
 var (
 	file_ethereal_proto_rawDescOnce sync.Once
@@ -1477,41 +1584,44 @@ func file_ethereal_proto_rawDescGZIP() []byte {
 	return file_ethereal_proto_rawDescData
 }
 
-var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_ethereal_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_ethereal_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_ethereal_proto_goTypes = []any{
-	(*L2Book)(nil),                     // 0: rim.v1.ethereal.L2Book
-	(*MarketPrice)(nil),                // 1: rim.v1.ethereal.MarketPrice
-	(*Fill)(nil),                       // 2: rim.v1.ethereal.Fill
-	(*TradeFill)(nil),                  // 3: rim.v1.ethereal.TradeFill
-	(*LiquidationItem)(nil),            // 4: rim.v1.ethereal.LiquidationItem
-	(*SubaccountLiquidation)(nil),      // 5: rim.v1.ethereal.SubaccountLiquidation
-	(*OrderUpdate)(nil),                // 6: rim.v1.ethereal.OrderUpdate
-	(*OrderFill)(nil),                  // 7: rim.v1.ethereal.OrderFill
-	(*Transfer)(nil),                   // 8: rim.v1.ethereal.Transfer
-	(*EventMessage)(nil),               // 9: rim.v1.ethereal.EventMessage
-	(*OrderUpdateEvent)(nil),           // 10: rim.v1.ethereal.OrderUpdateEvent
-	(*OrderFillEvent)(nil),             // 11: rim.v1.ethereal.OrderFillEvent
-	(*TradeFillEvent)(nil),             // 12: rim.v1.ethereal.TradeFillEvent
-	(*SubaccountLiquidationEvent)(nil), // 13: rim.v1.ethereal.SubaccountLiquidationEvent
-	(*structpb.ListValue)(nil),         // 14: google.protobuf.ListValue
+	(EventType)(0),                     // 0: rim.v1.ethereal.EventType
+	(*L2Book)(nil),                     // 1: rim.v1.ethereal.L2Book
+	(*MarketPrice)(nil),                // 2: rim.v1.ethereal.MarketPrice
+	(*Fill)(nil),                       // 3: rim.v1.ethereal.Fill
+	(*TradeFill)(nil),                  // 4: rim.v1.ethereal.TradeFill
+	(*LiquidationItem)(nil),            // 5: rim.v1.ethereal.LiquidationItem
+	(*SubaccountLiquidation)(nil),      // 6: rim.v1.ethereal.SubaccountLiquidation
+	(*OrderUpdate)(nil),                // 7: rim.v1.ethereal.OrderUpdate
+	(*OrderFill)(nil),                  // 8: rim.v1.ethereal.OrderFill
+	(*Transfer)(nil),                   // 9: rim.v1.ethereal.Transfer
+	(*EventMessage)(nil),               // 10: rim.v1.ethereal.EventMessage
+	(*OrderUpdateEvent)(nil),           // 11: rim.v1.ethereal.OrderUpdateEvent
+	(*OrderFillEvent)(nil),             // 12: rim.v1.ethereal.OrderFillEvent
+	(*TradeFillEvent)(nil),             // 13: rim.v1.ethereal.TradeFillEvent
+	(*SubaccountLiquidationEvent)(nil), // 14: rim.v1.ethereal.SubaccountLiquidationEvent
+	(*WebsocketMessage)(nil),           // 15: rim.v1.ethereal.WebsocketMessage
+	(*WebsocketStatus)(nil),            // 16: rim.v1.ethereal.WebsocketStatus
+	(*structpb.ListValue)(nil),         // 17: google.protobuf.ListValue
+	(*structpb.Struct)(nil),            // 18: google.protobuf.Struct
 }
 var file_ethereal_proto_depIdxs = []int32{
-	14, // 0: rim.v1.ethereal.L2Book.a:type_name -> google.protobuf.ListValue
-	14, // 1: rim.v1.ethereal.L2Book.b:type_name -> google.protobuf.ListValue
-	2,  // 2: rim.v1.ethereal.TradeFill.fills:type_name -> rim.v1.ethereal.Fill
-	4,  // 3: rim.v1.ethereal.SubaccountLiquidation.p:type_name -> rim.v1.ethereal.LiquidationItem
-	1,  // 4: rim.v1.ethereal.EventMessage.market_price:type_name -> rim.v1.ethereal.MarketPrice
-	0,  // 5: rim.v1.ethereal.EventMessage.book_diff:type_name -> rim.v1.ethereal.L2Book
-	8,  // 6: rim.v1.ethereal.EventMessage.transfer:type_name -> rim.v1.ethereal.Transfer
-	6,  // 7: rim.v1.ethereal.OrderUpdateEvent.data:type_name -> rim.v1.ethereal.OrderUpdate
-	7,  // 8: rim.v1.ethereal.OrderFillEvent.data:type_name -> rim.v1.ethereal.OrderFill
-	3,  // 9: rim.v1.ethereal.TradeFillEvent.data:type_name -> rim.v1.ethereal.TradeFill
-	5,  // 10: rim.v1.ethereal.SubaccountLiquidationEvent.data:type_name -> rim.v1.ethereal.SubaccountLiquidation
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	17, // 0: rim.v1.ethereal.L2Book.a:type_name -> google.protobuf.ListValue
+	17, // 1: rim.v1.ethereal.L2Book.b:type_name -> google.protobuf.ListValue
+	3,  // 2: rim.v1.ethereal.TradeFill.fills:type_name -> rim.v1.ethereal.Fill
+	5,  // 3: rim.v1.ethereal.SubaccountLiquidation.p:type_name -> rim.v1.ethereal.LiquidationItem
+	7,  // 4: rim.v1.ethereal.OrderUpdateEvent.data:type_name -> rim.v1.ethereal.OrderUpdate
+	8,  // 5: rim.v1.ethereal.OrderFillEvent.data:type_name -> rim.v1.ethereal.OrderFill
+	4,  // 6: rim.v1.ethereal.TradeFillEvent.data:type_name -> rim.v1.ethereal.TradeFill
+	6,  // 7: rim.v1.ethereal.SubaccountLiquidationEvent.data:type_name -> rim.v1.ethereal.SubaccountLiquidation
+	18, // 8: rim.v1.ethereal.WebsocketMessage.data:type_name -> google.protobuf.Struct
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_ethereal_proto_init() }
@@ -1519,24 +1629,21 @@ func file_ethereal_proto_init() {
 	if File_ethereal_proto != nil {
 		return
 	}
+	file_ethereal_proto_msgTypes[0].OneofWrappers = []any{}
 	file_ethereal_proto_msgTypes[8].OneofWrappers = []any{}
-	file_ethereal_proto_msgTypes[9].OneofWrappers = []any{
-		(*EventMessage_MarketPrice)(nil),
-		(*EventMessage_BookDiff)(nil),
-		(*EventMessage_Transfer)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ethereal_proto_rawDesc), len(file_ethereal_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   14,
+			NumEnums:      1,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_ethereal_proto_goTypes,
 		DependencyIndexes: file_ethereal_proto_depIdxs,
+		EnumInfos:         file_ethereal_proto_enumTypes,
 		MessageInfos:      file_ethereal_proto_msgTypes,
 	}.Build()
 	File_ethereal_proto = out.File

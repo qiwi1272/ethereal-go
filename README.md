@@ -33,19 +33,26 @@ see the [examples/](./examples/) folder in this repository.
 - Only one subaccount is currently supported; by default the first one discovered is used.
 - If you need to extend the protobuf spec, see [proto.md](./PROTO.md)
 
-```
-
 
 Client Status
 -----
-- Other methods will be added as they are supported and or needed.
-- This includes some missing rest methods, and transfer/liquidation websocket streams.
+```
+- SocketIO will be depreciated in favour of Websocket support.
+- Protobuf Client -> Server messaging is a WIP. Mostly JSON is used.
+- Some rest methods are missing that will be added as needed.
+```
 
+Todo
+-----
+```
+- callback error channel 
+- generic subscription namespace
+- "resubscribe" event method
+```
 
 Contributing
 -------------
 Contributions are welcome! Please open issues or pull requests as needed.
-```
 
 ## Code Formatting
 

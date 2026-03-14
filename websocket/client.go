@@ -124,7 +124,6 @@ func (c *Client) Listen(parent context.Context) error {
 
 		if cb, ok := c.callbacks[e.E]; ok {
 			event := pb.EventEnum(e.E)
-			fmt.Println(event.EventName())
 			if err = event.UnmarshalToCallback(data, cb); err != nil {
 				cancel(err)
 				return err

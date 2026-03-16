@@ -33,14 +33,26 @@ func main() {
 	p := products["ETHUSD"]
 
 	order := p.NewOrder(ethereal.ORDER_LIMIT, 0.123, 1000.1, false, ethereal.BUY, ethereal.TIF_GTD)
-	placed, err := order.Send(ctx, client)
+	placed, err := client.CreateOrder(ctx, order)
 	if err != nil {
 		log.Fatalf("failed to place limit order: %v", err)
 	}
 
 	// cancel the order we just placed
 	cancel := ethereal.NewCancel(placed.Id)
-	cancelled, err := cancel.Send(ctx, client)
+	cancelled, err := client.CancelOrder(ctx, cancel)
+	if err != nil {
+		log.Fatalf("failed to cancel limit order: %v", err)
+	}
+
+	// again
+	placed, err = rest.Send(ctx, client, order)
+	if err != nil {
+		log.Fatalf("failed to place limit order: %v", err)
+	}
+
+	// cancel the order we just placed
+	cancelled, err = rest.Send(ctx, client, cancel)
 	if err != nil {
 		log.Fatalf("failed to cancel limit order: %v", err)
 	}

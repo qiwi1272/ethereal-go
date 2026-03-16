@@ -29,7 +29,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	sid := rest.Subaccount.Id
+	sid := rest.GetSubaccount().Id
 
 	var symbols map[string]ethereal.Product
 	if symbols, err = rest.GetProductMap(ctx); err != nil {

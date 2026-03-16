@@ -37,14 +37,13 @@ func main() {
 		px := 1000.1 + float64(i)
 		orders[i] = eth_perp.NewOrder(ethereal.ORDER_LIMIT, 0.123, px, false, ethereal.BUY, ethereal.TIF_GTD)
 	}
-	placed, err := client.PlaceOrders(ctx, orders)
+	placed, err := client.CreateOrders(ctx, orders)
 	if err != nil {
 		log.Fatalf("failed to place limit order: %v", err)
 	}
 
 	// cancel the orders we just placed
-	cancel := ethereal.NewCancelBatch(placed)
-	cancelled, err := cancel.Send(ctx, client)
+	cancelled, err := client.CancelOrdersFromCreated(ctx, placed)
 	if err != nil {
 		log.Fatalf("failed to cancel limit order: %v", err)
 	}

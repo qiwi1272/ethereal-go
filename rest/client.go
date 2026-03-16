@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +15,8 @@ import (
 	"github.com/qiwi1272/ethereal-go"
 )
 
+const USER_AGENT = "ethereal-go/1.0.0dev"
+
 type Environment string
 
 const (
@@ -22,7 +25,45 @@ const (
 )
 
 type Client struct {
-	ethereal.RestClient
+	BaseURL string
+	Http    *http.Client
+	account *ethereal.Signer
+}
+
+func (e *Client) GetSubaccount() *ethereal.Subaccount {
+	return e.account.Subaccount
+}
+
+func (e *Client) GetTypes() *abi.TypedData {
+	return e.account.GetTypes()
+}
+
+func (e *Client) Do(ctx context.Context, method, path string, body any) ([]byte, error) {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, method, e.BaseURL+path, bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", USER_AGENT)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := e.Http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	out := new(bytes.Buffer)
+	_, err = out.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("ethereal error %d: %s", resp.StatusCode, out.String())
+	}
+	return out.Bytes(), nil
 }
 
 func NewClient(ctx context.Context, pk string, env Environment) (*Client, error) {
@@ -36,13 +77,13 @@ func NewClient(ctx context.Context, pk string, env Environment) (*Client, error)
 		ForceAttemptHTTP2:     true,
 	}
 
-	client := &Client{RestClient: ethereal.RestClient{
+	client := &Client{
 		BaseURL: string(env),
 		Http: &http.Client{
 			Transport: transport,
 			Timeout:   10 * time.Second,
 		},
-	}}
+	}
 
 	// load pk
 	if pk == "" {
@@ -54,7 +95,7 @@ func NewClient(ctx context.Context, pk string, env Environment) (*Client, error)
 		pk = pk[2:]
 	}
 	if ecdsa, err := crypto.HexToECDSA(pk); err == nil {
-		client.SetPk(ecdsa)
+		client.account = ethereal.NewSigner(ecdsa)
 	} else {
 		return nil, err
 	}
@@ -115,7 +156,7 @@ func (e *Client) InitDomain(ctx context.Context) (string, error) {
 		Domain: resp.Domain,
 	}
 
-	e.SetTypes(types)
+	e.account.SetTypes(types)
 
 	domain, err := types.HashStruct("EIP712Domain", types.Domain.Map())
 	if err != nil {
@@ -126,7 +167,7 @@ func (e *Client) InitDomain(ctx context.Context) (string, error) {
 }
 
 func (e *Client) InitSubaccount(ctx context.Context) error {
-	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.Address)
+	path := fmt.Sprintf("/v1/subaccount?sender=%s", e.account.Address)
 	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return err
@@ -138,15 +179,47 @@ func (e *Client) InitSubaccount(ctx context.Context) error {
 	if len(resp.Data) == 0 {
 		return errors.New("no subaccounts found")
 	}
-	e.Subaccount = &resp.Data[0] // NOTE: currently only one subaccount per client is supported
+	e.account.Subaccount = &resp.Data[0] // NOTE: currently only one subaccount per client is supported
 
 	return nil
 }
 
 // ---------- Methods ----------
 
+type sendable interface {
+	ethereal.OrderCreated | []*ethereal.OrderCancelled
+}
+
+type Sendable[T sendable] interface {
+	ethereal.Signable
+	Build(ethereal.SubaccountHolder)
+	Send(context.Context, ethereal.OrderClient, *ethereal.Signer) (T, error)
+}
+
+func Send[T sendable](ctx context.Context, cl *Client, msg Sendable[T]) (resp T, err error) {
+	return msg.Send(ctx, cl, cl.account)
+}
+
+func (e *Client) CreateOrder(ctx context.Context, msg Sendable[ethereal.OrderCreated]) (resp ethereal.OrderCreated, err error) {
+	return msg.Send(ctx, e, e.account)
+}
+
+func (e *Client) CreateOrders(ctx context.Context, msg []*ethereal.Order) (resp []*ethereal.OrderCreated, err error) {
+	order := NewOrderBatch(msg)
+	return order.SendBatch(ctx, e, Create, e.account)
+}
+
+func (e *Client) CancelOrder(ctx context.Context, msg Sendable[[]*ethereal.OrderCancelled]) (resp []*ethereal.OrderCancelled, err error) {
+	return msg.Send(ctx, e, e.account)
+}
+
+func (e *Client) CancelOrdersFromCreated(ctx context.Context, msg []*ethereal.OrderCreated) (resp []*ethereal.OrderCancelled, err error) {
+	cancel := NewCancelBatch(msg)
+	return cancel.Send(ctx, e, e.account)
+}
+
 func (e *Client) GetPosition(ctx context.Context) ([]ethereal.Position, error) {
-	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.Subaccount.Id, true)
+	path := fmt.Sprintf("/v1/position?subaccountId=%s&open=%v", e.account.Subaccount.Id, true)
 	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -160,7 +233,7 @@ func (e *Client) GetPosition(ctx context.Context) ([]ethereal.Position, error) {
 }
 
 func (e *Client) GetAccountBalance(ctx context.Context) ([]*ethereal.AccountBalance, error) {
-	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.Subaccount.Id)
+	path := fmt.Sprintf("/v1/subaccount/balance?subaccountId=%s", e.account.Subaccount.Id)
 	data, err := e.Do(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -189,10 +262,4 @@ func (e *Client) GetProductMap(ctx context.Context) (map[string]ethereal.Product
 	}
 
 	return products, nil
-}
-
-func (e *Client) PlaceOrders(ctx context.Context, orders []*ethereal.Order) ([]*ethereal.OrderCreated, error) {
-	batch := ethereal.NewBatch[*ethereal.Order, *ethereal.OrderCreated](orders...)
-	var cl ethereal.BatchOrderClient = e
-	return batch.SendBatch(ctx, &cl, ethereal.Create)
 }

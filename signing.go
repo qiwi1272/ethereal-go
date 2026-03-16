@@ -52,17 +52,17 @@ type SignedMessage[T Signable] struct {
 	Signature string `json:"signature"`
 }
 
-type Signer interface {
-	getPk() *ecdsa.PrivateKey
+type CanSign interface {
+	GetPk() *ecdsa.PrivateKey
 	GetTypes() *abi.TypedData
 }
 
 type Signable interface {
-	build(cl SubaccountHolder)
+	Build(cl SubaccountHolder)
 	ToMessage() (abi.TypedDataMessage, error)
 }
 
-func Sign(message Signable, primaryType string, signer Signer) (string, error) {
+func Sign(message Signable, primaryType string, signer CanSign) (string, error) {
 	msg, err := message.ToMessage()
 	if err != nil {
 		return "", err
@@ -75,7 +75,7 @@ func Sign(message Signable, primaryType string, signer Signer) (string, error) {
 
 	fullHash := MakeFullHash(DomainHash, messageHash)
 
-	sig, err := crypto.Sign(fullHash, signer.getPk())
+	sig, err := crypto.Sign(fullHash, signer.GetPk())
 	if err != nil {
 		return "", err
 	}

@@ -37,7 +37,7 @@ type SubscriptionIntent[T eventData] struct {
 	D eventData `json:"data"`
 }
 
-// intent abstraction   |   TODO: Subscription Intent protos
+// intent abstraction  
 func sub(e eventData) ([]byte, error) {
 	return json.Marshal(&SubscriptionIntent[eventData]{I: Sub, D: e})
 }

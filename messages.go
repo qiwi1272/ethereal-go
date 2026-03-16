@@ -153,7 +153,7 @@ func (o *Order) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *Order) build(cl SubaccountHolder) {
+func (o *Order) Build(cl SubaccountHolder) {
 	sub := cl.GetSubaccount()
 	o.Sender = sub.Account
 	o.Subaccount = sub.Name
@@ -204,80 +204,14 @@ func (o *OrderCancel) ToMessage() (abi.TypedDataMessage, error) {
 	}, nil
 }
 
-func (o *OrderCancel) build(cl SubaccountHolder) {
+func (o *OrderCancel) Build(cl SubaccountHolder) {
 	sub := cl.GetSubaccount()
 	o.Sender = sub.Account
 	o.Subaccount = sub.Name
 	o.Nonce = getOrderNonce()
 }
 
-func (o *OrderCancel) getId() (string, error) { return "", fmt.Errorf("IsCancel") }
-
 // -------- END CANCEL -------- //
-
-// -------- BEGIN BATCH ORDER -------- //
-
-type Batchable interface {
-	Signable
-	*Order | *OrderCancel
-}
-
-type OrderCreated struct {
-	Id     string `json:"id"`
-	Cloid  string `json:"clientOrderId"`
-	Filled string `json:"filled"`
-	Result string `json:"result"`
-}
-
-func (o *OrderCreated) getId() (string, error) { return o.Id, nil }
-
-type BatchResponseType interface {
-	*OrderCreated | *OrderCancelled
-	getId() (string, error)
-}
-
-type BatchOrder[T BatchResponseType] struct {
-	Payload []*Signable
-	resp    []T
-}
-
-func NewBatch[I Batchable, R BatchResponseType](
-	items ...I,
-) *BatchOrder[R] {
-	payload := make([]*Signable, len(items))
-	for i, v := range items {
-		*payload[i] = v
-	}
-	return &BatchOrder[R]{
-		Payload: payload,
-		resp:    make([]R, len(items)),
-	}
-}
-
-func NewCancelBatch(created []*OrderCreated) *OrderCancel {
-	ids := make([]string, len(created))
-	for i, o := range created {
-		ids[i] = o.Id
-	}
-	return &OrderCancel{
-		OrderIDs: ids,
-	}
-}
-
-func (b *BatchOrder[BatchResponseType]) NewCancel() (*OrderCancel, error) {
-	var ids = make([]string, len(b.resp))
-	var err error
-	for i, r := range b.resp {
-		if ids[i], err = r.getId(); err != nil {
-
-		}
-	}
-	return &OrderCancel{
-		OrderIDs: ids,
-	}, nil
-}
-
-// -------- END BATCH ORDER -------- //
 
 // -------- POSITION -------- //
 

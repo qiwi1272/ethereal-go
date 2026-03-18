@@ -4,17 +4,16 @@ Lightweight golang client for interacting with the Ethereal API.
 
 ## Features
 
-- Experimental protobuf support.
-- Order placement and cancellation for REST, Websocket, and Socket.IO
+- Server -> Client Protobuf support.
+- Batch execution support (concurrent, ordered, type-safe)
 - EIP-712 data signing
-- Batch execution support (concurrent, unordered, type-safe)
-- Automatic nonce and timestamp handling
+- Automatic nonce, timestamp, and subaccount handling for requests
 - Minimal dependencies
 
 ## Getting started
 
 - Requires Go 1.25+.
-- Install from GitHub: `go get github.com/roundinternetmoney/ethereal-wss`
+- Install from GitHub: `go get github.com/roundinternetmoney/ethereal-rest`
 
 ## Example Usage
 

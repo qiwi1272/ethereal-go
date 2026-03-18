@@ -1,4 +1,4 @@
-package ethereal
+package etherealRest
 
 import (
 	"fmt"
@@ -43,6 +43,24 @@ const (
 // -------- BEGIN ENUMS -------- //
 
 // -------- BEGIN ORDER -------- //
+
+type Product struct {
+	ID                     string          `json:"id"`
+	Ticker                 string          `json:"ticker"`
+	DisplayTicker          string          `json:"displayTicker"`
+	EngineType             OrderEngineType `json:"engineType"`
+	OnchainID              int64           `json:"onchainId"`
+	LotSize                string          `json:"lotSize"`
+	TickSize               string          `json:"tickSize"`
+	MakerFee               string          `json:"makerFee"`
+	TakerFee               string          `json:"takerFee"`
+	MaxQuantity            string          `json:"maxQuantity"`
+	MinQuantity            string          `json:"minQuantity"`
+	Volume24h              string          `json:"volume24h"`
+	FundingRate1h          string          `json:"fundingRate1h"`
+	MaxOpenInterestUsd     string          `json:"maxOpenInterestUsd"`
+	MaxPositionNotionalUsd string          `json:"maxPositionNotionalUsd"`
+}
 
 type Order struct {
 	Subaccount           string          `json:"subaccount"`
@@ -171,8 +189,8 @@ type OrderCancel struct {
 	Sender     string   `json:"sender"`
 	Subaccount string   `json:"subaccount"`
 	Nonce      string   `json:"nonce"`
-	OrderIDs   []string `json:"orderIds"`
-	Cloids     []string `json:"clientOrderIds"`
+	OrderIDs   []string `json:"orderIds,omitempty"`
+	Cloids     []string `json:"clientOrderIds,omitempty"`
 }
 
 type OrderCancelled struct {
@@ -187,12 +205,18 @@ func NewCancel(oids ...string) *OrderCancel {
 	}
 }
 
-func NewCancelOrderFromCreated(orders ...OrderCreated) *OrderCancel {
-	ids := make([]string, len(orders))
-	for i, o := range orders {
-		ids[i] = o.Id
+func NewCancelCloids(cloids ...string) *OrderCancel {
+	return &OrderCancel{
+		Cloids: cloids,
 	}
-	return NewCancel(ids...)
+}
+
+func NewCancelOrderFromCreated(orders ...*OrderCreated) *OrderCancel {
+	oids := make([]string, 0, len(orders))
+	for _, o := range orders {
+		oids = append(oids, o.Id)
+	}
+	return NewCancel(oids...)
 }
 
 func (o *OrderCancel) ToMessage() (abi.TypedDataMessage, error) {

@@ -1,4 +1,4 @@
-package ethereal
+package etherealRest
 
 import (
 	"context"
@@ -8,10 +8,6 @@ import (
 type OrderClient interface {
 	SubaccountHolder
 	Do(ctx context.Context, method, path string, body any) ([]byte, error)
-}
-
-type Response[T any] struct {
-	Data T `json:"data"`
 }
 
 type OrderCreated struct { // TODO: missed one

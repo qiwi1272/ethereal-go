@@ -1,4 +1,4 @@
-package ethereal // import "ethereal-dev"
+package etherealRest
 
 import (
 	"crypto/ecdsa"
@@ -6,8 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
-
-const USER_AGENT = "ethereal-go/1.0.0dev"
 
 type Signer struct {
 	Subaccount *Subaccount

@@ -1,4 +1,4 @@
-package ethereal
+package etherealRest
 
 import (
 	"crypto/ecdsa"

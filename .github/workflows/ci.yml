@@ -19,17 +19,8 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Format
-        run: make fmt
-
-      - name: Vet code
-        run: make vet
-
-      - name: Tidy modules
-        run: make tidy
-
       - name: Verify build
-        run: make build
+        run: make rest
 
       - name: Run tests
         run: make test

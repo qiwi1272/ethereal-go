@@ -12,19 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/qiwi1272/ethereal-go"
-	"github.com/qiwi1272/ethereal-go/rest"
+	rest "roundinternet.money/ethereal-rest"
 )
 
-func getTestOrder() ethereal.Order {
-	return ethereal.Order{
+func getTestOrder() rest.Order {
+	return rest.Order{
 		Sender:     "0xdeadbeef00000000000000000000000000000000",
 		Subaccount: "0x123456789abcde00000000000000000000000000000000000000000000000000",
 		Quantity:   "1",
 		Price:      "3000",
 		ReduceOnly: false,
-		Side:       ethereal.BUY,
-		EngineType: ethereal.PERPETUAL,
+		Side:       rest.BUY,
+		EngineType: rest.PERPETUAL,
 		OnchainID:  2, // later -> ProductId
 		Nonce:      "1764897077655477722",
 		SignedAt:   int64(1764897077),
@@ -206,7 +205,7 @@ func TestOrderSigning(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println("Message Hash:", common.Bytes2Hex(messageHash))
-	signature, err := ethereal.Sign(&order, "TradeOrder", signer)
+	signature, err := rest.Sign(&order, "TradeOrder", signer)
 	if err != nil {
 		panic(err)
 	}
@@ -215,7 +214,7 @@ func TestOrderSigning(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fullHash := ethereal.MakeFullHash(domainBytes, messageHash)
+	fullHash := rest.MakeFullHash(domainBytes, messageHash)
 	fmt.Println("Full Hash:", common.Bytes2Hex(fullHash))
 
 	expectedSignature := "0x82aed7486e9855459f58537e413760597e689d3ba7b859f56b6edc730e044fff2888ccf92cd282a8299d8d6a76f8bf0aa93d97f30340c4bb0d27b626aca62f211b"
@@ -226,7 +225,7 @@ func TestOrderSigning(t *testing.T) {
 
 	// We extract the exact payload
 
-	payload := ethereal.SignedMessage[*ethereal.Order]{
+	payload := rest.SignedMessage[*rest.Order]{
 		Data:      &order,
 		Signature: signature,
 	}

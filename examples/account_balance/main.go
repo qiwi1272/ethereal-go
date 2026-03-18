@@ -2,23 +2,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
-	"github.com/qiwi1272/ethereal-go/rest"
+	rest "roundinternet.money/ethereal-rest"
 )
 
 func main() {
-	// load dotenv
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// create client and fetch products
-	client, err := rest.NewClient(ctx, os.Getenv("ETHEREAL_PK"), rest.Testnet)
+	client, err := rest.NewClient(ctx, "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a", rest.Testnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -28,6 +23,8 @@ func main() {
 		log.Fatalf("failed to get balance: %v", err)
 	}
 
-	log.Println(balance)
+	for _, b := range balance {
+		fmt.Println(b)
+	}
 
 }

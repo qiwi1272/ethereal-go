@@ -3,24 +3,17 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-	"github.com/qiwi1272/ethereal-go"
-	"github.com/qiwi1272/ethereal-go/rest"
+	rest "roundinternet.money/ethereal-rest"
 )
 
 func main() {
-	// load dotenv
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// create client and fetch products
-	client, err := rest.NewClient(ctx, os.Getenv("ETHEREAL_PK"), rest.Mainnet)
+	client, err := rest.NewClient(ctx, "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a", rest.Testnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}
@@ -32,10 +25,10 @@ func main() {
 	// place 3 orders for ethusd
 	eth_perp := products["ETHUSD"]
 
-	orders := make([]*ethereal.Order, 3)
+	orders := make([]*rest.Order, 3)
 	for i := range orders {
 		px := 1000.1 + float64(i)
-		orders[i] = eth_perp.NewOrder(ethereal.ORDER_LIMIT, 0.123, px, false, ethereal.BUY, ethereal.TIF_GTD)
+		orders[i] = eth_perp.NewOrder(rest.ORDER_LIMIT, 0.123, px, false, rest.BUY, rest.TIF_GTD)
 	}
 	placed, err := client.CreateOrders(ctx, orders)
 	if err != nil {
@@ -48,6 +41,9 @@ func main() {
 		log.Fatalf("failed to cancel limit order: %v", err)
 	}
 
-	log.Printf("Placed and cancelled orders: %s", cancelled)
+	for _, c := range cancelled {
+		log.Printf("Placed and cancelled order: %v", c)
+	}
+
 	time.Sleep(time.Second * 1)
 }

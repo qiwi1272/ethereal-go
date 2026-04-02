@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	abi "github.com/ethereum/go-ethereum/signer/core/apitypes"
-	rest "roundinternet.money/ethereal-rest"
+	rest "github.com/roundinternetmoney/ethereal-rest"
 )
 
 func getTestOrder() rest.Order {

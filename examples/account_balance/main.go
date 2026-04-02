@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	rest "roundinternet.money/ethereal-rest"
+	rest "github.com/roundinternetmoney/ethereal-rest"
 )
 
 func main() {

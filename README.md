@@ -1,4 +1,8 @@
-# Ethereal Go Client
+# Golang Rest Client for Ethereal API
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/roundinternetmoney/ethereal-rest.svg)](https://pkg.go.dev/github.com/roundinternetmoney/ethereal-rest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/roundinternetmoney/ethereal-rest)](https://goreportcard.com/report/github.com/roundinternetmoney/ethereal-rest)
+[![CI](https://github.com/roundinternetmoney/ethereal-rest/actions/workflows/ci.yml/badge.svg)](https://github.com/roundinternetmoney/ethereal-rest/actions/workflows/ci.yml)
 
 Lightweight golang client for interacting with the Ethereal API.
 
@@ -14,6 +18,7 @@ Lightweight golang client for interacting with the Ethereal API.
 
 - Requires Go 1.25+.
 - Install from GitHub: `go get github.com/roundinternetmoney/ethereal-rest`
+- Import path: `github.com/roundinternetmoney/ethereal-rest`
 
 ## Example Usage
 
@@ -32,9 +37,9 @@ see the [examples/](./examples/) folder in this repository.
 - Only one subaccount is currently supported; by default the first one discovered is used.
 
 ## Modifying the package
-- This client depends on protobuf wrappers from [pkg.go.dev/roundinternet.money/pb-dex](https://pkg.go.dev/roundinternet.money/pb-dex)
+- This client depends on protobuf wrappers from [pkg.go.dev/roundinternet.money/protos](https://pkg.go.dev/roundinternet.money/protos)
 - If you want to extend the `.proto` files directly, see the Buf module at [buf.build/round-internet-money/dex](https://buf.build/round-internet-money/dex)
-- Otherwise, use or fork [github.com/roundinternetmoney/pb-dex](https://github.com/Round-Internet-Money/pb-dex)
+- Otherwise, use or fork [github.com/roundinternetmoney/protos](github.com/roundinternetmoney/protos)
 
 Contributing
 -------------

@@ -83,7 +83,7 @@ func (b *BatchOrder[BatchResponseType]) SendBatch(
 		go func() {
 			defer wg.Done()
 			order.Build(cl)
-			sig, err := Sign(order, string(Create), signer)
+			sig, err := Sign(order, string(intent), signer)
 			if err != nil {
 				errCh <- err
 				return

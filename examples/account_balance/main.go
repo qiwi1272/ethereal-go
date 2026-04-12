@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	rest "github.com/roundinternetmoney/ethereal-rest"
 )
@@ -12,8 +13,12 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// create client and fetch products
-	client, err := rest.NewClient(ctx, "0bb5d63b84421e1268dda020818ae30cf26e7f10e321fb820a8aa69216dea92a", rest.Testnet)
+	pk := os.Getenv("ETHEREAL_PK")
+	if pk == "" {
+		log.Fatal("ETHEREAL_PK is required (hex private key, with or without 0x prefix)")
+	}
+
+	client, err := rest.NewClient(ctx, pk, rest.Testnet)
 	if err != nil {
 		log.Fatalf("failed to init ethereal client: %v", err)
 	}

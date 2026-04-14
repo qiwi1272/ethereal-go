@@ -194,10 +194,10 @@ type OrderCancel struct {
 }
 
 type OrderCancelled struct {
-	Id     string `json:"id"`
-	Cloid  string `json:"clientOrderId"`
-	Filled string `json:"filled"`
-	Result string `json:"result"`
+	Id     string  `json:"id"`
+	Cloid  string  `json:"clientOrderId"`
+	Filled float64 `json:"filled"`
+	Result string  `json:"result"`
 }
 
 func NewCancel(oids ...string) *OrderCancel {

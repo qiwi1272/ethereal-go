@@ -196,6 +196,7 @@ type OrderCancel struct {
 type OrderCancelled struct {
 	Id     string `json:"id"`
 	Cloid  string `json:"clientOrderId"`
+	Filled string `json:"filled"`
 	Result string `json:"result"`
 }
 
